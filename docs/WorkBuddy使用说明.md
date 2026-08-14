@@ -34,7 +34,7 @@
 python -m pip install -r requirements.txt
 ```
 
-若提示“找不到python”，请让单位IT人员安装Python，并在安装时勾选“Add Python to PATH”。
+若提示“找不到python”，请让安装Python，并在安装时勾选“Add Python to PATH”。
 
 ### （三）将Skill导入WorkBuddy
 
