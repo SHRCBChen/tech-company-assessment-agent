@@ -1,5 +1,7 @@
 # 科创企业批量检索与初评Agent
 
+> WorkBuddy同事请先阅读：[WorkBuddy使用说明书](docs/WorkBuddy使用说明.md)。仓库同时提供可直接导入WorkBuddy的Skill包和两份任务提示词。
+
 输入企业/项目名单及同一行大赛现场自由笔记，由AI Agent完成主体映射和公开深检，再从同一事实记录生成三类成果：
 
 1. 企业信息Excel（企业名称＋11类信息）；
@@ -68,6 +70,12 @@ python scripts/build-word-report.py "企业初评报告.md" "企业初评报告.
 node scripts/apply-visit-update.mjs --run "runs/<批次目录>" --update "拜访增量.json"
 ```
 
+WorkBuddy或未安装Node.js的电脑使用Python入口：
+
+```powershell
+python scripts/apply_visit_update.py --run "runs/<批次目录>" --update "拜访增量.json"
+```
+
 之后重新构建三类成果。新事实与旧事实冲突时不得静默覆盖。
 
 ## 六、连接ima
@@ -94,4 +102,3 @@ powershell -ExecutionPolicy Bypass -File scripts/sync-approved-run-to-ima.ps1 -R
 - 不把合作、送样、定点、中标、量产和客户混为一类；
 - A/B/C/D表示潜力和调研优先级，不是信用评级；
 - 报告仅供初步筛选与拜访准备，不构成授信、投资或合作结论。
-

@@ -1,0 +1,29 @@
+{
+  "enterprise_name": "示例硬科技有限公司",
+  "update_type": "分支行拜访",
+  "update_date": "2026-08-14",
+  "sources": [
+    {
+      "source_id": "S-VISIT-001",
+      "source_type": "分支行拜访",
+      "title": "示例企业拜访记录",
+      "location": "本地拜访记录文件",
+      "supports": "企业现场陈述的样机和客户验证进展",
+      "cannot_support": "不能单独证明订单、回款或量产"
+    }
+  ],
+  "facts": [
+    {
+      "fact_id": "F-VISIT-001",
+      "source_id": "S-VISIT-001",
+      "fact_type": "产业化进展",
+      "fact_text": "企业现场陈述已完成第二代样机，并正在两家客户开展测试。",
+      "evidence_status": "现场陈述",
+      "confidence_note": "客户名称、测试结果及后续采购安排仍待证明材料核验",
+      "valid_status": "当前有效"
+    }
+  ],
+  "raw_materials": [
+    "示例拜访记录原文"
+  ]
+}

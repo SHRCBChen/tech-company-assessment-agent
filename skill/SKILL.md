@@ -39,6 +39,8 @@ description: 在Codex中批量导入科创企业或项目名称及同一行大�
 3. 只有六轮、11列审计、现场笔记拆解与交叉核验、三类专项深化、跨列扫描和三队列全部完成，企业才能标`researched`；主体未闭合则标`mapping_blocked`。
 4. 后续材料先转换为`visit-update.schema.json`，再运行：
    `node scripts/apply-visit-update.mjs --run "<批次目录>" --update "<审核后的增量.json>"`
+   WorkBuddy或未安装Node.js的电脑改用：
+   `python scripts/apply_visit_update.py --run "<批次目录>" --update "<审核后的增量.json>"`
    新事实替代旧事实时写`replaces_fact_id`；不能判断时保留冲突，不静默覆盖。
 
 ## 构建、质检与交付

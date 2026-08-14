@@ -1,0 +1,6 @@
+请完整读取并严格执行 skill/SKILL.md 及其 references，使用WorkBuddy可用的真实网页搜索/浏览器处理“<企业名单文件.xlsx>”。
+
+先用 python scripts/start_batch.py 建立“<批次名称>”批次，再逐家完成主体映射、六轮公开深检、11类字段审计、现场笔记拆解与交叉核验、投资机构逐家背景核验，以及事实—关系—结论链。所有事实、来源、审计状态和评价依据写入本批次records，不要直接从Excel拼报告。
+
+完成全部企业后运行 python scripts/build_deliverables.py 生成Excel、ima当前事实底稿和Markdown初评报告。遇到登录、验证码、企查查漏导出、主体无法映射或付费页面时立即告诉我具体企业和所需动作，不要降低检索标准，也不要虚构内容。
+

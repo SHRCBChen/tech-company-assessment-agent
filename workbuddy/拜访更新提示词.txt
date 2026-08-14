@@ -1,0 +1,4 @@
+请读取 skill/SKILL.md、schemas/visit-update.schema.json 和本批次现有records。将“<拜访记录或企业材料>”保留原文，区分企业陈述、现场观察、内部评价和证明材料，生成审核用增量JSON。不要静默覆盖冲突事实；新事实替代旧事实时写明replaces_fact_id。
+
+审核无误后，使用 python scripts/apply_visit_update.py 写入原批次，再运行 python scripts/build_deliverables.py 重建Excel、ima底稿和报告。报告评价必须根据更新后的客观事实重新判断，不沿用旧结论。
+
