@@ -70,16 +70,30 @@ python -m pip install -r requirements.txt
 |---|
 | 示例项目A |
 
-现场笔记文件至少包含用于匹配的名称列和笔记列：
+现场笔记可以是下列任一种形式，也可一次上传多个附件：
+
+1. **Excel/CSV**：至少包含用于匹配的名称列和笔记列：
 
 | 企业/项目名称 | 大赛现场自由笔记 |
 |---|---|
 | 示例项目A | 现场记录的团队、产品、客户、融资、经营预测及评委意见 |
 
+2. **Word（.docx）自由笔记**：每家企业以“企业/项目名称”或唯一的简称作为一个小标题，下面连续记录该企业内容。例如：
+
+```text
+蓝韵净芯微电子（上海）有限公司
+音频SoC芯片……已向Harman出货……
+
+基琳微
+4D毫米波雷达芯片……
+```
+
+3. **图片/PDF**：直接上传拍照笔记、截图或扫描件。WorkBuddy先识别文字、再按其中出现的企业名称匹配；不能仅凭文件名猜测归属。识别不清、出现多家企业或未匹配的内容会单独列为待确认项。
+
 启动命令：
 
 ```powershell
-python scripts/start_batch.py --input "企业名单.xlsx" --notes "现场笔记.xlsx" --name "批次名称" --require-onsite-notes
+python scripts/start_batch.py --input "企业名单.xlsx" --notes "现场笔记.docx" --notes "现场照片1.jpg" --name "批次名称" --require-onsite-notes
 ```
 
 ### （二）名单和笔记放在同一个Excel
@@ -92,12 +106,12 @@ python scripts/start_batch.py --input "企业名单及现场笔记.xlsx" --name 
 
 注意事项：
 
-1. 分开上传时，两个文件必须都有可匹配的企业/项目名称；
+1. Excel/CSV笔记必须有可匹配的企业/项目名称；Word应使用企业名称或唯一简称分段；图片/PDF由WorkBuddy视觉识别后匹配；
 2. 系统按规范化名称匹配，无法匹配的笔记、重名冲突和缺失笔记会单独列出，不会自动猜测；
 3. 一家企业可以没有现场笔记，但不可把另一家企业的笔记错配过来；
 4. 现场笔记保留原文，不要先让其他模型概括；
 5. 不要在Excel中写入账号密码、API Key、身份证号等敏感信息；
-6. 项目名不等于公司名时保留项目原名；若名单和笔记使用不同名称，应在笔记文件增加与名单完全一致的匹配名称列，不要让Agent猜测对应关系。
+6. 项目名不等于公司名时保留项目原名；若名单和笔记使用不同名称，应在Excel笔记中增加与名单完全一致的匹配名称列。Word/图片中无法确定归属时，Agent必须列出待确认项，不得猜测。
 
 建议将文件复制到工具目录下的`inbox`文件夹；没有该文件夹时可自行新建。
 
@@ -125,9 +139,9 @@ python scripts/start_batch.py --input "企业名单及现场笔记.xlsx" --name 
 推荐指令：
 
 ```text
-请完整读取并严格执行 skill/SKILL.md 及其 references，使用WorkBuddy可用的真实网页搜索/浏览器处理“<企业名单文件.xlsx>”和“<现场笔记文件.xlsx>”。
+请完整读取并严格执行 skill/SKILL.md 及其 references，使用WorkBuddy可用的真实网页搜索/浏览器处理“<企业名单文件.xlsx>”及全部现场笔记附件（Excel/CSV、Word .docx、图片或PDF均可）。
 
-先用 python scripts/start_batch.py --input "<企业名单文件.xlsx>" --notes "<现场笔记文件.xlsx>" --name "<批次名称>" --require-onsite-notes 建立批次。检查并报告无法匹配的笔记、重名冲突和缺失笔记，不得猜测绑定；随后逐家完成主体映射、六轮公开深检、11类字段审计、现场笔记拆解与交叉核验、投资机构逐家背景核验，以及事实—关系—结论链。所有事实、来源、审计状态和评价依据写入本批次records，不要直接从Excel拼报告。
+先用 python scripts/start_batch.py --input "<企业名单文件.xlsx>" --notes "<现场笔记附件1>" --notes "<现场笔记附件2>" --name "<批次名称>" --require-onsite-notes 建立批次。对Word按企业标题拆分；对图片/PDF先视觉识别原文，再按文字中的企业/项目名称匹配。检查并报告无法匹配的笔记、重名冲突、Word未绑定段落、图片/PDF待识别材料和缺失笔记，不得仅凭文件名或上下文猜测绑定；随后逐家完成主体映射、六轮公开深检、11类字段审计、现场笔记拆解与交叉核验、投资机构逐家背景核验，以及事实—关系—结论链。所有事实、来源、审计状态和评价依据写入本批次records，不要直接从Excel拼报告。
 
 完成全部企业后运行 python scripts/build_deliverables.py 生成Excel、ima当前事实底稿和Markdown初评报告。遇到登录、验证码、企查查漏导出、主体无法映射或付费页面时立即告诉我具体企业和所需动作，不要降低检索标准，也不要虚构内容。
 ```
