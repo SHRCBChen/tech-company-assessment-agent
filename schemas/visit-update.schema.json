@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "现场或分支行拜访增量",
+  "type": "object",
+  "required": ["enterprise_name", "update_type", "sources", "facts"],
+  "properties": {
+    "enterprise_name": {"type": "string"},
+    "update_type": {"enum": ["大赛现场", "分支行拜访", "企业材料"]},
+    "update_date": {"type": "string"},
+    "sources": {"type": "array"},
+    "facts": {"type": "array"},
+    "assessment": {"type": "object"},
+    "raw_materials": {"type": "array", "items": {"type": "string"}}
+  }
+}

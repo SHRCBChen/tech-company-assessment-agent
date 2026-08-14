@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "科创企业批量检索记录",
+  "type": "object",
+  "required": ["enterprise_id", "enterprise_name", "status", "subject_mapping", "initial_materials", "sources", "facts", "field_outputs", "legacy_inheritance", "research_audit", "assessment"],
+  "properties": {
+    "enterprise_id": {"type": "string"},
+    "enterprise_name": {"type": "string"},
+    "input_name": {"type": "string"},
+    "status": {"enum": ["pending_research", "mapping_blocked", "researched", "deliverables_built", "approved", "synced"]},
+    "subject_mapping": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["confirmed", "project_only", "ambiguous", "blocked"]},
+        "legal_entity": {"type": "string"},
+        "project_name": {"type": "string"},
+        "brand_names": {"type": "array", "items": {"type": "string"}},
+        "former_names": {"type": "array", "items": {"type": "string"}},
+        "mapping_basis": {"type": "string"}
+      }
+    },
+    "coverage": {"enum": ["A", "B", "C"]},
+    "researched_at": {"type": "string"},
+    "initial_materials": {"type": "array", "items": {"type": "object", "required": ["material_id", "material_type", "source_id", "linked_enterprise_name", "link_status", "raw_text", "processing_status", "extracted_fact_ids"], "properties": {"material_id": {"type": "string"}, "material_type": {"const": "大赛现场自由笔记"}, "source_id": {"type": "string"}, "linked_enterprise_name": {"type": "string"}, "link_status": {"enum": ["row_bound", "confirmed", "conflict"]}, "input_row": {"type": "integer"}, "raw_text": {"type": "string"}, "processing_status": {"enum": ["pending_extraction", "extracted", "blocked"]}, "extracted_fact_ids": {"type": "array", "items": {"type": "string"}}}}},
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source_id", "title", "location", "source_type"],
+        "properties": {
+          "source_id": {"type": "string"},
+          "title": {"type": "string"},
+          "location": {"type": "string"},
+          "source_type": {"enum": ["公开信息", "大赛名单", "大赛现场", "分支行拜访", "企业材料"]},
+          "published_at": {"type": "string"},
+          "retrieved_at": {"type": "string"},
+          "supports": {"type": "string"},
+          "cannot_support": {"type": "string"}
+        }
+      }
+    },
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["fact_id", "fact_text", "target_field", "source_id", "evidence_status", "valid_status"],
+        "properties": {
+          "fact_id": {"type": "string"},
+          "fact_text": {"type": "string"},
+          "excel_text": {"type": "string"},
+          "target_field": {"type": "string"},
+          "fact_type": {"type": "string"},
+          "source_id": {"type": "string"},
+          "evidence_status": {"enum": ["公开确认", "企业自述", "现场陈述", "现场观察", "待核线索", "内部评价"]},
+          "source_type": {"enum": ["公开信息", "大赛名单", "大赛现场", "分支行拜访", "企业材料"]},
+          "fact_date": {"type": "string"},
+          "valid_status": {"enum": ["当前有效", "待核", "已替代", "存在冲突"]},
+          "replaces_fact_id": {"type": "string"},
+          "confidence_note": {"type": "string"},
+          "origin_status": {"enum": ["本轮新增", "历史线索重新获证", "用户材料继承", "初始现场笔记", "现场增量", "拜访增量"]},
+          "priority": {"type": "integer", "minimum": 1, "maximum": 5}
+        }
+      }
+    },
+    "field_outputs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["text", "basis_fact_ids"],
+        "properties": {
+          "text": {"type": "string"},
+          "basis_fact_ids": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "legacy_inheritance": {
+      "type": "object",
+      "required": ["required", "completed", "candidate_files", "matched_sources", "reverified_fact_ids", "unresolved_losses"],
+      "properties": {
+        "required": {"type": "boolean"},
+        "completed": {"type": "boolean"},
+        "candidate_files": {"type": "array", "items": {"type": "string"}},
+        "matched_sources": {"type": "array", "items": {"type": "string"}},
+        "reverified_fact_ids": {"type": "array", "items": {"type": "string"}},
+        "regression_report": {"type": "string"},
+        "unresolved_losses": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "research_audit": {
+      "type": "object",
+      "required": ["mode", "rounds", "anchor_queue", "weak_source_upgrade_queue", "conflict_queue", "coverage_scan_completed", "blank_field_followup_completed", "company_official_channels_checked", "government_attachment_lists_checked", "business_profile_checked", "visual_search_cards_checked", "industrialization_qualification_ip_deepened", "cross_column_scan_completed", "contact_cleanup_completed", "investor_background_deepened", "channel_checks", "field_checks", "person_anchors_found", "person_anchors_reviewed", "confirmed_investors", "investor_background_completed_for"],
+      "properties": {
+        "mode": {"enum": ["full_deep_research", "incremental_update"]},
+        "onsite_notes_ingested": {"type": "boolean"},
+        "onsite_notes_decomposed": {"type": "boolean"},
+        "onsite_notes_public_crosschecked": {"type": "boolean"},
+        "rounds": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["status", "queries_or_paths", "new_fact_ids", "new_anchors", "remaining_tasks"],
+            "properties": {
+              "status": {"enum": ["pending", "in_progress", "complete", "blocked", "not_applicable"]},
+              "queries_or_paths": {"type": "array", "items": {"type": "string"}},
+              "new_fact_ids": {"type": "array", "items": {"type": "string"}},
+              "new_anchors": {"type": "array", "items": {"type": "string"}},
+              "remaining_tasks": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        },
+        "anchor_queue": {"type": "array", "items": {"type": "string"}},
+        "weak_source_upgrade_queue": {"type": "array", "items": {"type": "string"}},
+        "conflict_queue": {"type": "array", "items": {"type": "string"}},
+        "coverage_scan_completed": {"type": "boolean"},
+        "blank_field_followup_completed": {"type": "boolean"},
+        "company_official_channels_checked": {"type": "boolean"},
+        "government_attachment_lists_checked": {"type": "boolean"},
+        "business_profile_checked": {"type": "boolean"},
+        "visual_search_cards_checked": {"type": "boolean"},
+        "industrialization_qualification_ip_deepened": {"type": "boolean"},
+        "cross_column_scan_completed": {"type": "boolean"},
+        "contact_cleanup_completed": {"type": "boolean"},
+        "investor_background_deepened": {"type": "boolean"},
+        "channel_checks": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["status", "paths", "notes"],
+            "properties": {
+              "status": {"enum": ["checked", "not_applicable", "blocked"]},
+              "paths": {"type": "array", "items": {"type": "string"}},
+              "notes": {"type": "string"}
+            }
+          }
+        },
+        "field_checks": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["status", "paths", "fact_ids"],
+            "properties": {
+              "status": {"enum": ["found", "searched_no_public_result", "blocked", "not_applicable"]},
+              "paths": {"type": "array", "items": {"type": "string"}},
+              "fact_ids": {"type": "array", "items": {"type": "string"}},
+              "next_step": {"type": "string"}
+            }
+          }
+        },
+        "person_anchors_found": {"type": "array", "items": {"type": "string"}},
+        "person_anchors_reviewed": {"type": "array", "items": {"type": "string"}},
+        "confirmed_investors": {"type": "array", "items": {"type": "string"}},
+        "investor_background_completed_for": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+      "assessment": {
+        "type": "object",
+        "required": ["rating", "summary"],
+        "properties": {
+          "rating": {"enum": ["A", "B", "C", "D"]},
+          "track": {"type": "string"},
+          "development_stage": {"type": "string"},
+          "stage_benchmark": {"type": "string"},
+          "summary": {"type": "string"},
+          "basis_fact_ids": {"type": "array", "items": {"type": "string"}},
+          "conclusion_chains": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["conclusion", "reasoning", "basis_fact_ids"],
+              "properties": {
+                "theme": {"type": "string"},
+                "conclusion": {"type": "string"},
+                "reasoning": {"type": "string"},
+                "basis_fact_ids": {"type": "array", "items": {"type": "string"}},
+                "change_conditions": {"type": "array", "items": {"type": "string"}}
+              }
+            }
+          },
+          "uncertainties": {"type": "array", "items": {"type": "string"}},
+        "visit_priorities": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "version_history": {"type": "array"}
+  }
+}

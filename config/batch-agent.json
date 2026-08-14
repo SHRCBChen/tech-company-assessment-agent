@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "default_wave_size": 5,
+  "quality_mode": "full_deep_research_strict",
+  "deep_research_playbook": "config/deep-research-playbook.json",
+  "legacy_search_roots": [
+    "../outputs/company-research-complete"
+  ],
+  "excel_headers": [
+    "企业名称",
+    "核心人员",
+    "核心人员背景",
+    "核心人员公开联系方式",
+    "主要产品",
+    "核心技术及应用场景",
+    "产业化进展及客户线索",
+    "科创资质及科技项目",
+    "知识产权及技术成果",
+    "上下游",
+    "竞争对手",
+    "融资及投资机构背景"
+  ],
+  "rating_scale": {
+    "A": "优先调研",
+    "B": "重点跟踪",
+    "C": "持续观察",
+    "D": "信息待补"
+  },
+  "policies": {
+    "qcc_batch_export_preflight_required": true,
+    "qcc_missing_export_action": "立即提醒用户并列出缺失法律主体；不得静默降级或延迟到交付阶段",
+    "project_only_qcc_handling": "项目名先完成法律主体映射；未映射项目不得误报为漏导出企业",
+    "knowledge_base_upload": "after_validation_auto",
+    "knowledge_base_manual_action_required_for": [
+      "replace_or_delete_existing_file",
+      "move_file_or_change_permission",
+      "dpapi_account_mismatch",
+      "api_requires_manual_confirmation"
+    ],
+    "knowledge_base_file_rule": "每家企业一个“企业全称｜当前事实底稿.md”",
+    "report_length": "1-2页",
+    "report_disclaimer": "本报告仅基于截至报告日取得的客观公开信息及经标注的现场/拜访材料形成初步判断，供内部筛选与拜访准备参考，不构成授信、投资或合作结论。",
+    "formal_delivery_requires_all_companies_pass": true,
+    "legacy_regression_required_when_prior_assets_exist": true,
+    "legacy_assets_are_optional_evaluation_aids": true,
+    "new_company_must_pass_six_rounds_without_legacy": true,
+    "blank_field_requires_two_distinct_paths": true,
+    "confirmed_investor_requires_individual_background": true,
+    "rating_meaning": "priority_to_research_and_intervene_not_maturity_or_credit",
+    "track_stage_relative_assessment": true,
+    "report_reasoning_mode": "fact_relation_conclusion_chain",
+    "onsite_notes_default_trust": "high_first_hand",
+    "onsite_verification_only_for_decision_changing_claims": true
+  }
+}

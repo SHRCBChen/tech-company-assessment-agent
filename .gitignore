@@ -1,0 +1,16 @@
+.secure/
+config/ima.json
+runs/
+outputs/
+deliverables/
+node_modules/
+__pycache__/
+*.pyc
+*.log
+*.tmp
+*.bak
+~$*
+.DS_Store
+.idea/
+.vscode/
+

@@ -1,0 +1,15 @@
+{
+  "knowledge_base_id": "",
+  "folders": {
+    "current_profiles": "01｜当前有效企业档案",
+    "reports": "02｜企业初评报告",
+    "competition_notes": "03｜大赛现场信息摘要",
+    "branch_updates": "04｜分支行拜访更新摘要",
+    "qualifications": "05｜政府资质与科技项目",
+    "ip": "06｜专利与技术成果",
+    "investors": "07｜投资机构资料",
+    "methodology": "08｜方法、口径与使用说明"
+  },
+  "sync_mode": "append_version",
+  "require_review_before_upload": true
+}
