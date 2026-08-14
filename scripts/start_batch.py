@@ -5,6 +5,7 @@ import csv
 import hashlib
 import json
 import re
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 
@@ -49,6 +50,10 @@ def safe_name(value: str) -> str:
     return value[:70] or "batch"
 
 
+def match_key(value: str) -> str:
+    return re.sub(r"\s+", "", unicodedata.normalize("NFKC", value)).casefold()
+
+
 def empty_audit() -> dict:
     round_ids = [
         "R1_subject_mapping", "R2_channel_coverage", "R3_field_deepening",
@@ -77,7 +82,7 @@ def empty_audit() -> dict:
     }
 
 
-def new_record(name: str, note: str, input_path: Path, row_number: int) -> dict:
+def new_record(name: str, note: str, input_path: Path, row_number: int, link_status: str) -> dict:
     enterprise_id = hashlib.sha256(name.encode("utf-8")).hexdigest()[:16]
     source_id = "S-ONSITE-001"
     sources = []
@@ -90,7 +95,7 @@ def new_record(name: str, note: str, input_path: Path, row_number: int) -> dict:
         })
         materials.append({
             "material_id": "M-ONSITE-001", "material_type": "大赛现场自由笔记", "source_id": source_id,
-            "linked_enterprise_name": name, "link_status": "row_bound", "input_row": row_number,
+            "linked_enterprise_name": name, "link_status": link_status, "input_row": row_number,
             "raw_text": note, "processing_status": "pending_extraction", "extracted_fact_ids": [],
         })
     return {
@@ -108,6 +113,7 @@ def new_record(name: str, note: str, input_path: Path, row_number: int) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True)
+    parser.add_argument("--notes", help="可选：与企业名单分开上传的现场笔记Excel或CSV")
     parser.add_argument("--name", required=True)
     parser.add_argument("--output-root", default="runs")
     parser.add_argument("--require-onsite-notes", action="store_true")
@@ -119,19 +125,54 @@ def main() -> None:
     note_header = pick_header(headers, NOTE_HEADERS)
     if not name_header:
         raise SystemExit(f"Missing enterprise/project name column. Accepted: {NAME_HEADERS}")
-    if args.require_onsite_notes and not note_header:
-        raise SystemExit(f"Missing onsite note column. Accepted: {NOTE_HEADERS}")
     merged: dict[str, list[str]] = {}
     first_row: dict[str, int] = {}
+    note_source: dict[str, tuple[Path, int]] = {}
+    names_by_key: dict[str, str] = {}
     for index, row in enumerate(rows, start=2):
         name = text(row.get(name_header))
         if not name:
             continue
+        key = match_key(name)
+        if key in names_by_key and names_by_key[key] != name:
+            raise SystemExit(f"企业名单存在规范化后重名，无法安全匹配：{names_by_key[key]} / {name}")
+        names_by_key[key] = name
         merged.setdefault(name, [])
         note = text(row.get(note_header)) if note_header else ""
         if note:
             merged[name].append(note)
+            note_source.setdefault(name, (input_path, index))
         first_row.setdefault(name, index)
+
+    unmatched_note_names: list[str] = []
+    notes_path = Path(args.notes).resolve() if args.notes else None
+    if notes_path:
+        note_rows = load_rows(notes_path)
+        note_headers = set(note_rows[0]) if note_rows else set()
+        note_name_header = pick_header(note_headers, NAME_HEADERS)
+        separate_note_header = pick_header(note_headers, NOTE_HEADERS)
+        if not note_name_header:
+            raise SystemExit(f"现场笔记文件缺少企业/项目名称列。Accepted: {NAME_HEADERS}")
+        if not separate_note_header:
+            raise SystemExit(f"现场笔记文件缺少现场笔记列。Accepted: {NOTE_HEADERS}")
+        seen_unmatched: set[str] = set()
+        for index, row in enumerate(note_rows, start=2):
+            note_name = text(row.get(note_name_header))
+            note = text(row.get(separate_note_header))
+            if not note_name or not note:
+                continue
+            matched_name = names_by_key.get(match_key(note_name))
+            if not matched_name:
+                if note_name not in seen_unmatched:
+                    unmatched_note_names.append(note_name)
+                    seen_unmatched.add(note_name)
+                continue
+            if note not in merged[matched_name]:
+                merged[matched_name].append(note)
+            note_source.setdefault(matched_name, (notes_path, index))
+
+    if args.require_onsite_notes and not note_header and not notes_path:
+        raise SystemExit(f"未提供现场笔记列或独立现场笔记文件。Accepted note headers: {NOTE_HEADERS}")
     stamp = datetime.now().strftime("%Y%m%d%H%M%S")
     run_dir = Path(args.output_root).resolve() / f"{stamp}-{safe_name(args.name)}"
     records_dir = run_dir / "records"
@@ -142,22 +183,25 @@ def main() -> None:
         note = "\n".join(dict.fromkeys(notes))
         if not note:
             missing_notes.append(name)
-        record = new_record(name, note, input_path, first_row[name])
+        source_path, source_row = note_source.get(name, (notes_path or input_path, first_row[name]))
+        record = new_record(name, note, source_path, source_row, "name_bound" if notes_path else "row_bound")
         record_file = f"records/{record['enterprise_id']}.json"
         (run_dir / record_file).write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         companies.append({"enterprise_id": record["enterprise_id"], "enterprise_name": name, "record_file": record_file})
     manifest = {
         "batch_id": run_dir.name, "batch_name": args.name, "created_at": datetime.now().isoformat(timespec="seconds"),
-        "input_file": str(input_path), "company_count": len(companies), "missing_onsite_notes": missing_notes,
+        "input_file": str(input_path), "notes_file": str(notes_path) if notes_path else "",
+        "input_binding_mode": "separate_files_by_name" if notes_path else "combined_file_same_row",
+        "company_count": len(companies), "missing_onsite_notes": missing_notes,
+        "unmatched_note_names": unmatched_note_names,
         "companies": companies,
     }
     (run_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     latest = Path(args.output_root).resolve() / "latest-run.txt"
     latest.parent.mkdir(parents=True, exist_ok=True)
     latest.write_text(str(run_dir), encoding="utf-8")
-    print(json.dumps({"status": "BATCH_CREATED", "run": str(run_dir), "companies": len(companies), "missing_onsite_notes": missing_notes}, ensure_ascii=False, indent=2))
+    print(json.dumps({"status": "BATCH_CREATED", "run": str(run_dir), "companies": len(companies), "missing_onsite_notes": missing_notes, "unmatched_note_names": unmatched_note_names}, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
     main()
-

@@ -2,7 +2,7 @@
 
 ## 一、这套工具能做什么
 
-将包含“企业/项目名称”和“同一行大赛现场自由笔记”的Excel交给WorkBuddy后，WorkBuddy按照统一检索口径逐家开展公开信息深检，并从同一份事实记录生成三类成果：
+将企业/项目名单和大赛现场自由笔记交给WorkBuddy后，WorkBuddy按照统一检索口径逐家开展公开信息深检，并从同一份事实记录生成三类成果。名单和现场笔记既可以放在同一个Excel，也可以作为两个文件分别上传：
 
 1. 11类企业信息Excel；
 2. 一家企业一个文件的ima当前事实底稿；
@@ -58,21 +58,46 @@ python -m pip install -r requirements.txt
 
 不要让模型在没有真实网页来源的情况下假装完成公开深检。
 
-## 三、准备企业名单Excel
+## 三、准备企业名单和现场笔记
 
-输入Excel至少包含两列，列名可采用：
+支持以下两种方式。
+
+### （一）名单和笔记分开上传（更常见）
+
+企业名单文件至少包含一列：
+
+| 企业/项目名称 |
+|---|
+| 示例项目A |
+
+现场笔记文件至少包含用于匹配的名称列和笔记列：
 
 | 企业/项目名称 | 大赛现场自由笔记 |
 |---|---|
 | 示例项目A | 现场记录的团队、产品、客户、融资、经营预测及评委意见 |
 
+启动命令：
+
+```powershell
+python scripts/start_batch.py --input "企业名单.xlsx" --notes "现场笔记.xlsx" --name "批次名称" --require-onsite-notes
+```
+
+### （二）名单和笔记放在同一个Excel
+
+同一个Excel中保留“企业/项目名称”和“大赛现场自由笔记”两列，且两者位于同一行。启动时不传`--notes`：
+
+```powershell
+python scripts/start_batch.py --input "企业名单及现场笔记.xlsx" --name "批次名称" --require-onsite-notes
+```
+
 注意事项：
 
-1. 企业或项目名称与对应现场笔记必须在同一行；
-2. 一家企业可以没有现场笔记，但不可把另一家企业的笔记错配过来；
-3. 现场笔记保留原文，不要先让其他模型概括；
-4. 不要在Excel中写入账号密码、API Key、身份证号等敏感信息；
-5. 项目名不等于公司名时保留项目原名，由Agent在检索中完成主体映射。
+1. 分开上传时，两个文件必须都有可匹配的企业/项目名称；
+2. 系统按规范化名称匹配，无法匹配的笔记、重名冲突和缺失笔记会单独列出，不会自动猜测；
+3. 一家企业可以没有现场笔记，但不可把另一家企业的笔记错配过来；
+4. 现场笔记保留原文，不要先让其他模型概括；
+5. 不要在Excel中写入账号密码、API Key、身份证号等敏感信息；
+6. 项目名不等于公司名时保留项目原名；若名单和笔记使用不同名称，应在笔记文件增加与名单完全一致的匹配名称列，不要让Agent猜测对应关系。
 
 建议将文件复制到工具目录下的`inbox`文件夹；没有该文件夹时可自行新建。
 
@@ -89,9 +114,9 @@ python -m pip install -r requirements.txt
 
 不要只选择企业名单所在文件夹，否则WorkBuddy无法找到Skill、脚本和数据结构。
 
-### （二）上传或引用名单
+### （二）上传或引用输入文件
 
-把企业名单Excel拖入任务输入框，或使用`@`引用该文件。
+把企业名单和现场笔记文件一起拖入任务输入框，或使用`@`分别引用两个文件。若两者已经在同一个Excel中，只需上传该Excel。
 
 ### （三）粘贴启动指令
 
@@ -100,9 +125,9 @@ python -m pip install -r requirements.txt
 推荐指令：
 
 ```text
-请完整读取并严格执行 skill/SKILL.md 及其 references，使用WorkBuddy可用的真实网页搜索/浏览器处理“<企业名单文件.xlsx>”。
+请完整读取并严格执行 skill/SKILL.md 及其 references，使用WorkBuddy可用的真实网页搜索/浏览器处理“<企业名单文件.xlsx>”和“<现场笔记文件.xlsx>”。
 
-先用 python scripts/start_batch.py 建立“<批次名称>”批次，再逐家完成主体映射、六轮公开深检、11类字段审计、现场笔记拆解与交叉核验、投资机构逐家背景核验，以及事实—关系—结论链。所有事实、来源、审计状态和评价依据写入本批次records，不要直接从Excel拼报告。
+先用 python scripts/start_batch.py --input "<企业名单文件.xlsx>" --notes "<现场笔记文件.xlsx>" --name "<批次名称>" --require-onsite-notes 建立批次。检查并报告无法匹配的笔记、重名冲突和缺失笔记，不得猜测绑定；随后逐家完成主体映射、六轮公开深检、11类字段审计、现场笔记拆解与交叉核验、投资机构逐家背景核验，以及事实—关系—结论链。所有事实、来源、审计状态和评价依据写入本批次records，不要直接从Excel拼报告。
 
 完成全部企业后运行 python scripts/build_deliverables.py 生成Excel、ima当前事实底稿和Markdown初评报告。遇到登录、验证码、企查查漏导出、主体无法映射或付费页面时立即告诉我具体企业和所需动作，不要降低检索标准，也不要虚构内容。
 ```
@@ -179,25 +204,29 @@ python scripts/apply_visit_update.py --run "runs\<批次目录>" --update "拜�
 python scripts/build_deliverables.py --run "runs\<批次目录>"
 ```
 
-## 八、同步到ima
+## 八、通过WorkBuddy连接器同步到ima
 
-首次在一台新电脑使用时：
+### （一）默认方式：使用ima连接器
 
-1. 将`config\ima.example.json`复制为`config\ima.json`；
-2. 填写目标知识库ID；
-3. 运行凭据设置脚本；
-4. 测试连接；
-5. 先选择一家企业做上传验证，再批量同步。
+WorkBuddy能够通过连接器访问ima时，应优先使用连接器，不要求同事配置API Key、Client ID、DPAPI或本地上传脚本：
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/setup-ima-credentials.ps1
-powershell -ExecutionPolicy Bypass -File scripts/test-ima-connection.ps1
-powershell -ExecutionPolicy Bypass -File scripts/sync-approved-run-to-ima.ps1 -RunPath "runs\<批次目录>" -ApprovedBy "操作人"
+1. 在WorkBuddy左侧进入“连接器”；
+2. 找到ima连接器并点击添加；若当前版本未显示独立ima卡片，则通过“自定义连接器/MCP”接入单位已批准的ima连接；
+3. 按页面提示登录并授权，只授予完成知识库读取和上传所需的权限；
+4. 选择“大赛企业知识库”，确认连接状态为已连接/启用；
+5. 先选择一家企业的`deliverables\ima-ready\*｜当前事实底稿.md`试传；
+6. 在ima中用企业全称和一条关键事实检索，确认文件名、中文内容和索引正常；
+7. 验证通过后，再让WorkBuddy把本批次其余`ima-ready`文件上传到同一知识库。
+
+推荐指令：
+
+```text
+请使用已连接的ima连接器，将当前批次deliverables/ima-ready目录中的企业当前事实底稿上传到“大赛企业知识库”。先上传一家并通过企业全称和关键事实检索验证；验证成功后再上传其余文件。遇到同名文件、覆盖、替换、删除或权限问题时立即告诉我具体企业，不要自行删除旧文件。
 ```
 
-API Key和Client ID由每台电脑的操作人员在本机输入，不写入Excel、不发到聊天、不提交到GitHub。凭据使用Windows账户加密，换电脑或换Windows账号后必须重新设置。
+### （二）备用方式：本地OpenAPI脚本
 
-如果ima自动上传提示缺少Node或官方COS上传组件，不要反复重试：Excel、报告和`ima-ready`底稿已正常生成，可先由知识库管理员手工上传；同时让工具维护人补齐该电脑的ima官方上传环境。
+仅当所在WorkBuddy版本没有可用ima连接器，并且单位允许使用OpenAPI时，才按仓库README中的脚本方式配置。API Key和Client ID不得写入Excel、聊天或GitHub。换电脑后需重新设置本机凭据。
 
 ## 九、最常见的错误
 
@@ -223,11 +252,9 @@ API Key和Client ID由每台电脑的操作人员在本机输入，不写入Exce
 
 处理：Excel使用`.xlsx`格式；CSV保存为UTF-8 BOM；PowerShell脚本保持UTF-8编码；不要用旧版记事本覆盖脚本。
 
-### （五）换电脑后ima不能用
+### （五）WorkBuddy连接器无法访问ima
 
-原因：DPAPI凭据只能由原Windows账户解密。
-
-处理：在新电脑重新运行`setup-ima-credentials.ps1`，不要复制`.secure`文件夹。
+处理：先确认ima连接器处于已连接和启用状态、当前账号有“大赛企业知识库”权限，并在连接器管理页重新授权。若使用的是备用OpenAPI脚本，换电脑后再重新运行`setup-ima-credentials.ps1`，不要复制`.secure`文件夹。
 
 ## 十、安全与使用边界
 
@@ -242,4 +269,4 @@ API Key和Client ID由每台电脑的操作人员在本机输入，不写入Exce
 - [创建任务、选择工作目录及上传文件](https://www.workbuddy.ai/docs/zh/workbuddy/Create-Task)
 - [安装和管理本地Skill](https://www.workbuddy.ai/docs/zh/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Skills-Market)
 - [通过MCP连接外部工具](https://www.workbuddy.ai/docs/zh/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/MCP-Guide)
-
+- [连接器管理与自定义连接器](https://www.workbuddy.ai/docs/zh/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Connector)

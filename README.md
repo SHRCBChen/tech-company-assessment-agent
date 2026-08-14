@@ -2,7 +2,7 @@
 
 > WorkBuddy同事请先阅读：[WorkBuddy使用说明书](docs/WorkBuddy使用说明.md)。仓库同时提供可直接导入WorkBuddy的Skill包和两份任务提示词。
 
-输入企业/项目名单及同一行大赛现场自由笔记，由AI Agent完成主体映射和公开深检，再从同一事实记录生成三类成果：
+输入企业/项目名单和大赛现场自由笔记（支持同一文件或分开上传并按名称匹配），由AI Agent完成主体映射和公开深检，再从同一事实记录生成三类成果：
 
 1. 企业信息Excel（企业名称＋11类信息）；
 2. ima当前事实底稿（一家企业一个文件，保留完整事实与证据边界）；
@@ -29,12 +29,12 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 
 ## 二、输入文件
 
-Excel或CSV至少包含：
+企业名单Excel或CSV至少包含名称列。现场笔记可以放在名单文件同一行，也可以单独上传一个包含“匹配名称列＋笔记列”的Excel/CSV：
 
 - `企业名称`、`企业/项目名称`或`项目名称`；
 - `大赛现场自由笔记`、`现场笔记`、`现场自由笔记`、`现场记录`或`自由笔记`。
 
-企业名称和现场笔记必须在同一行。不要在输入文件中放入API Key、账号密码或不必要的个人敏感信息。
+分开上传时，系统按企业/项目名称匹配，并输出无法匹配、重名冲突和缺失笔记；不会自动猜测对应关系。不要在输入文件中放入API Key、账号密码或不必要的个人敏感信息。
 
 ## 三、新建批次
 
@@ -42,6 +42,12 @@ Excel或CSV至少包含：
 
 ```powershell
 python scripts/start_batch.py --input "企业名单.xlsx" --name "批次名称" --require-onsite-notes
+```
+
+名单和现场笔记分开时：
+
+```powershell
+python scripts/start_batch.py --input "企业名单.xlsx" --notes "现场笔记.xlsx" --name "批次名称" --require-onsite-notes
 ```
 
 命令会生成`runs/<批次>/manifest.json`和逐企业事实记录。随后对Agent下达：
@@ -79,6 +85,10 @@ python scripts/apply_visit_update.py --run "runs/<批次目录>" --update "拜�
 之后重新构建三类成果。新事实与旧事实冲突时不得静默覆盖。
 
 ## 六、连接ima
+
+WorkBuddy默认使用ima连接器直接授权并上传`deliverables/ima-ready`中的底稿；先试传一家并检索验证，再上传其余文件。无需向同事分发API Key或Client ID。
+
+以下本地OpenAPI脚本仅作为没有可用ima连接器时的备用方案：
 
 1. 复制`config/ima.example.json`为`config/ima.json`，仅填写自己的知识库ID；
 2. 在自己的Windows账户运行：

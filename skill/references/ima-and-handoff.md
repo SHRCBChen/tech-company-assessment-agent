@@ -2,7 +2,11 @@
 
 ## 自动同步边界
 
-用户已授权在本地自动质检通过后，对正式ima知识库执行正常新增上传和同步，无需每次询问。运行：
+用户已授权在本地自动质检通过后，对正式ima知识库执行正常新增上传和同步，无需每次询问。
+
+在WorkBuddy中优先使用已授权的ima连接器：先上传一家`deliverables/ima-ready`底稿并用企业全称和关键事实检索验证，再上传其余文件。连接器可用时不要求同事配置API Key、Client ID、DPAPI或本地上传组件。
+
+在Codex或没有可用ima连接器的兼容环境中，才运行本地OpenAPI脚本：
 
 `powershell -ExecutionPolicy Bypass -File scripts/sync-approved-run-to-ima.ps1 -RunPath "<批次目录>" -ApprovedBy "<批准人>"`
 
@@ -13,7 +17,8 @@
 - 同名文件需要在ima界面删除或替换；
 - 文件需要移动、知识库权限需要调整；
 - ima要求人工确认或官方接口不支持目标操作；
-- Windows DPAPI无法解密凭据；
+- 连接器未授权、失效或无目标知识库权限；
+- 使用备用OpenAPI脚本时Windows DPAPI无法解密凭据；
 - 企查查等网站需要登录、验证码、付费权限或用户打开指定页面；
 - 企查查批量导出遗漏已映射法律主体。
 
@@ -25,7 +30,7 @@ ima采用“一家企业一个当前事实底稿文件”，不为每家企业�
 
 本地的统一事实记录是生成源；ima是其可检索发布形态，不替代本地事实记录。任何更新先写入并审核本地记录，再重建Excel、ima待同步文件和报告，确保三者同源。
 
-DPAPI凭据只能由创建凭据的同一Windows账户解密。出现`Key not valid for use in specified state`时，不重新索要或明文保存Key；立即提醒用户用原Windows账户运行同步脚本，或在目标账户重新执行凭据设置。
+DPAPI仅适用于备用OpenAPI脚本。凭据只能由创建凭据的同一Windows账户解密。出现`Key not valid for use in specified state`时，不重新索要或明文保存Key；立即提醒用户优先改用WorkBuddy ima连接器，或在目标账户重新执行凭据设置。
 
 ## 本地归档与交接
 

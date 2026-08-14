@@ -21,6 +21,10 @@ function compact(value) {
   return String(value ?? "").replace(/\uFEFF/g, "").replace(/\s+/g, " ").trim();
 }
 
+function bindingKey(value) {
+  return compact(value).normalize("NFKC").replace(/\s+/g, "").toLocaleLowerCase("zh-CN");
+}
+
 function mergeEntries(values) {
   const byName = new Map();
   for (const value of values) {
@@ -111,9 +115,32 @@ const args = argsOf(process.argv.slice(2));
 if (!args.input) throw new Error("Usage: start-batch.mjs --input <企业名单.xlsx|txt|json> [--name 批次名] [--limit 5]");
 const input = path.resolve(args.input);
 let { entries, note_column_found: noteColumnFound } = await readEntries(input);
+const notesInput = args.notes ? path.resolve(args.notes) : "";
+const unmatchedNoteNames = [];
+if (notesInput) {
+  const noteData = await readEntries(notesInput);
+  if (!noteData.note_column_found) throw new Error("独立现场笔记文件缺少现场笔记列。");
+  const entryByKey = new Map();
+  for (const entry of entries) {
+    const key = bindingKey(entry.input_name);
+    if (entryByKey.has(key) && entryByKey.get(key).input_name !== entry.input_name) throw new Error(`企业名单存在规范化后重名，无法安全匹配：${entryByKey.get(key).input_name} / ${entry.input_name}`);
+    entryByKey.set(key, entry);
+  }
+  for (const noteEntry of noteData.entries) {
+    const target = entryByKey.get(bindingKey(noteEntry.input_name));
+    if (!target) {
+      if (!unmatchedNoteNames.includes(noteEntry.input_name)) unmatchedNoteNames.push(noteEntry.input_name);
+      continue;
+    }
+    for (const note of noteEntry.onsite_notes) {
+      if (!target.onsite_notes.some((item) => item.raw_text === note.raw_text)) target.onsite_notes.push({ ...note, source_file: notesInput });
+    }
+  }
+  noteColumnFound = noteColumnFound || noteData.note_column_found;
+}
 if (args.limit) entries = entries.slice(0, Number(args.limit));
 if (!entries.length) throw new Error("没有从输入文件中识别出企业或项目名称。");
-if (args["require-onsite-notes"] && !noteColumnFound) throw new Error("输入文件缺少大赛现场笔记列。请将企业名称与大赛现场笔记放在同一行后重试。");
+if (args["require-onsite-notes"] && !noteColumnFound) throw new Error("未提供现场笔记列或独立现场笔记文件。");
 
 const batchName = compact(args.name) || path.basename(input, path.extname(input));
 const batchId = `${timestamp()}-${safeName(batchName)}`;
@@ -131,8 +158,8 @@ for (const entry of entries) {
   const id = enterpriseId(name);
   const record = structuredClone(template);
   Object.assign(record, { enterprise_id: id, enterprise_name: name, input_name: name });
-  record.initial_materials = entry.onsite_notes.map((note, index) => ({ material_id: `M-ONSITE-${String(index + 1).padStart(3, "0")}`, material_type: "大赛现场自由笔记", source_id: `S-ONSITE-${String(index + 1).padStart(3, "0")}`, linked_enterprise_name: name, link_status: "row_bound", input_row: note.input_row, raw_text: note.raw_text, processing_status: "pending_extraction", extracted_fact_ids: [] }));
-  record.sources = record.initial_materials.map((material) => ({ source_id: material.source_id, title: `大赛现场自由笔记（导入第${material.input_row || "?"}行）`, location: `${input}#row=${material.input_row || ""}`, source_type: "大赛现场", published_at: "", retrieved_at: new Date().toISOString(), supports: `原始笔记：${material.raw_text}`, cannot_support: "不能单独证明客户关系、融资完成、量产、资质认定、专利权属或其他需外部核验事项；须先原子化拆解并与公开信息交叉核验。" }));
+  record.initial_materials = entry.onsite_notes.map((note, index) => ({ material_id: `M-ONSITE-${String(index + 1).padStart(3, "0")}`, material_type: "大赛现场自由笔记", source_id: `S-ONSITE-${String(index + 1).padStart(3, "0")}`, linked_enterprise_name: name, link_status: notesInput ? "name_bound" : "row_bound", input_row: note.input_row, raw_text: note.raw_text, processing_status: "pending_extraction", extracted_fact_ids: [] }));
+  record.sources = record.initial_materials.map((material, index) => ({ source_id: material.source_id, title: `大赛现场自由笔记（导入第${material.input_row || "?"}行）`, location: `${entry.onsite_notes[index]?.source_file ?? input}#row=${material.input_row || ""}`, source_type: "大赛现场", published_at: "", retrieved_at: new Date().toISOString(), supports: `原始笔记：${material.raw_text}`, cannot_support: "不能单独证明客户关系、融资完成、量产、资质认定、专利权属或其他需外部核验事项；须先原子化拆解并与公开信息交叉核验。" }));
   record.legacy_inheritance.required = legacyCandidates.length > 0;
   record.legacy_inheritance.candidate_files = legacyCandidates;
   await fs.writeFile(path.join(runDir, "records", `${id}.json`), `${JSON.stringify(record, null, 2)}\n`, "utf8");
@@ -144,11 +171,12 @@ const manifest = {
   batch_id: batchId,
   batch_name: batchName,
   input_file: input,
+  notes_file: notesInput,
   created_at: new Date().toISOString(),
   current_stage: "research",
   quality_mode: config.quality_mode ?? "full_deep_research_strict",
   legacy_candidates: legacyCandidates,
-  input_binding: { mode: "enterprise_name_and_onsite_notes_same_row", note_column_found: noteColumnFound, total_note_count: entries.reduce((sum, item) => sum + item.onsite_notes.length, 0), enterprises_without_notes: entries.filter((item) => !item.onsite_notes.length).map((item) => item.input_name) },
+  input_binding: { mode: notesInput ? "separate_files_by_name" : "combined_file_same_row", note_column_found: noteColumnFound, total_note_count: entries.reduce((sum, item) => sum + item.onsite_notes.length, 0), enterprises_without_notes: entries.filter((item) => !item.onsite_notes.length).map((item) => item.input_name), unmatched_note_names: unmatchedNoteNames },
   policies: { ima_upload: "after_review", outputs: ["11列企业主表Excel", "ima当前事实底稿", "1-2页企业初评报告"], formal_delivery_requires_all_companies_pass: true },
   companies
 };
@@ -156,5 +184,5 @@ await fs.writeFile(path.join(runDir, "manifest.json"), `${JSON.stringify(manifes
 const legacy = await collectLegacyAssets(runDir);
 await fs.writeFile(path.join(ROOT, "runs", "latest-run.txt"), `${runDir}\n`, "utf8");
 
-console.log(JSON.stringify({ status: "BATCH_READY", batch_id: batchId, run_dir: runDir, enterprise_count: companies.length, enterprises: entries.map((item) => item.input_name), onsite_note_count: manifest.input_binding.total_note_count, enterprises_without_notes: manifest.input_binding.enterprises_without_notes, legacy_assets: legacy }, null, 2));
+console.log(JSON.stringify({ status: "BATCH_READY", batch_id: batchId, run_dir: runDir, enterprise_count: companies.length, enterprises: entries.map((item) => item.input_name), onsite_note_count: manifest.input_binding.total_note_count, enterprises_without_notes: manifest.input_binding.enterprises_without_notes, unmatched_note_names: unmatchedNoteNames, legacy_assets: legacy }, null, 2));
 process.exit(0);

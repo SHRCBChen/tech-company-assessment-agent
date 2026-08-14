@@ -1,6 +1,6 @@
 interface:
   display_name: "科创企业批量检索与初评"
   short_description: "导入企业及现场笔记，生成Excel、ima底稿和初评报告"
-  default_prompt: "Use $batch-tech-company-assessment to 导入企业名单及同一行大赛现场笔记，完成公开深检并生成Excel、ima底稿和初评报告。"
+  default_prompt: "Use $batch-tech-company-assessment to 导入企业名单和现场笔记（可同表或分开上传），完成公开深检并生成Excel、ima底稿和初评报告。"
 policy:
   allow_implicit_invocation: true
