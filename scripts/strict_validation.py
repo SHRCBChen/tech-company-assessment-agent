@@ -51,8 +51,17 @@ def validate_record(record: dict, fields: list[str]) -> list[str]:
     facts = record.get("facts") or []
     fact_ids = {_text(item.get("fact_id")) for item in facts if _text(item.get("fact_id"))}
     for fact in facts:
+        if not _text(fact.get("target_field")):
+            errors.append(f"事实 {_text(fact.get('fact_id'))} 缺少目标字段")
         if _text(fact.get("source_id")) not in source_ids:
             errors.append(f"事实 {_text(fact.get('fact_id'))} 引用了不存在的来源")
+    for source in sources:
+        if source.get("source_type") not in {"公开信息", "大赛名单", "大赛现场", "分支行拜访", "企业材料"}:
+            errors.append(f"来源 {_text(source.get('source_id'))} 的source_type不符合统一枚举")
+        if not _text(source.get("supports")):
+            errors.append(f"来源 {_text(source.get('source_id'))} 未说明可支持范围")
+        if source.get("source_type") == "公开信息" and not _text(source.get("cannot_support")):
+            errors.append(f"来源 {_text(source.get('source_id'))} 未说明证据边界")
 
     materials = record.get("initial_materials") or []
     for material in materials:
@@ -113,19 +122,19 @@ def validate_record(record: dict, fields: list[str]) -> list[str]:
             errors.append(f"缺少字段检索审计：{field}")
             continue
         status = check.get("status")
-        if status not in {"found", "blank_after_search", "not_applicable"}:
+        if status not in {"found", "searched_no_public_result", "not_applicable"}:
             errors.append(f"字段审计状态无效：{field}")
         if value and any(marker in value for marker in EMPTY_PLACEHOLDERS):
             errors.append(f"Excel字段不能用无结果说明占位，应留空：{field}")
         if status == "found":
-            found = check.get("found_fact_ids") or []
+            found = check.get("fact_ids") or []
             if not value or not basis or not found:
                 errors.append(f"字段标记为 found 但没有正文、依据或事实ID：{field}")
             for fact_id in set(basis) | set(found):
                 if fact_id not in fact_ids:
                     errors.append(f"字段 {field} 引用了不存在的事实ID：{fact_id}")
-        elif status == "blank_after_search":
-            paths = {_text(path) for path in check.get("paths_checked", []) if _text(path)}
+        elif status == "searched_no_public_result":
+            paths = {_text(path) for path in check.get("paths", []) if _text(path)}
             if value:
                 errors.append(f"字段标记为空但仍有正文：{field}")
             if len(paths) < 2:
@@ -143,4 +152,16 @@ def validate_record(record: dict, fields: list[str]) -> list[str]:
     for investor in investors:
         if finance_text and investor not in finance_text:
             errors.append(f"已确认投资方未进入融资列：{investor}")
+        item = (audit.get("investor_checks") or {}).get(investor) or {}
+        if item.get("relationship_status") != "publicly_confirmed":
+            errors.append(f"已确认投资方缺少公开投资关系核验：{investor}")
+        relationship_sources = set(item.get("relationship_source_ids") or [])
+        background_sources = set(item.get("background_source_ids") or [])
+        if not relationship_sources or not relationship_sources.issubset(source_ids):
+            errors.append(f"投资方关系来源无效：{investor}")
+        if not background_sources or not background_sources.issubset(source_ids):
+            errors.append(f"投资方背景来源无效：{investor}")
+        completed_parts = sum(bool(_text(item.get(key))) for key in ("manager_or_parent", "focus_and_stage", "relevant_resources"))
+        if not _text(item.get("institution_type")) or completed_parts < 2:
+            errors.append(f"投资方背景未达到最低完整度：{investor}")
     return list(dict.fromkeys(errors))

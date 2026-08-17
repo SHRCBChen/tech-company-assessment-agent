@@ -165,7 +165,7 @@ def empty_audit() -> dict:
         "contact_cleanup_completed": False, "investor_background_deepened": False,
         "channel_checks": {key: {"status": "", "paths": [], "notes": ""} for key in channels},
         "field_checks": {}, "person_anchors_found": [], "person_anchors_reviewed": [],
-        "confirmed_investors": [], "investor_background_completed_for": [],
+        "confirmed_investors": [], "investor_background_completed_for": [], "investor_checks": {},
     }
 
 

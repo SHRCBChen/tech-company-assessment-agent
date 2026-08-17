@@ -61,6 +61,7 @@ export async function validateRun(runDir) {
     const sourceIds = new Set(sources.map((s) => s.source_id));
     const sourceById = new Map(sources.map((s) => [s.source_id, s]));
     for (const source of sources) {
+      if (!["公开信息", "大赛名单", "大赛现场", "分支行拜访", "企业材料"].includes(source.source_type)) errors.push(`来源${source.source_id || "(空)"}的source_type不符合统一枚举`);
       if (!String(source.title ?? "").trim()) errors.push(`来源${source.source_id || "(空)"}缺少标题`);
       if (!String(source.location ?? "").trim()) errors.push(`来源${source.source_id || "(空)"}缺少链接或保存位置`);
       if (!String(source.supports ?? "").trim()) errors.push(`来源${source.source_id || "(空)"}未写明支持范围`);
@@ -163,6 +164,15 @@ export async function validateRun(runDir) {
     for (const investor of investors) if (!completedInvestors.has(investor)) errors.push(`已确认投资方未逐家补充背景：${investor}`);
     if (investors.size && String(fieldOutputs["融资及投资机构背景"]?.text ?? "").trim()) {
       for (const investor of investors) if (!fieldOutputs["融资及投资机构背景"].text.includes(investor)) errors.push(`已确认投资方未进入Excel融资列：${investor}`);
+    }
+    const investorChecks = audit.investor_checks ?? {};
+    for (const investor of investors) {
+      const check = investorChecks[investor] ?? {};
+      if (check.relationship_status !== "publicly_confirmed") errors.push(`已确认投资方缺少公开投资关系核验：${investor}`);
+      if (!(check.relationship_source_ids ?? []).length || !(check.relationship_source_ids ?? []).every((id) => sourceIds.has(id))) errors.push(`投资方关系来源无效：${investor}`);
+      if (!(check.background_source_ids ?? []).length || !(check.background_source_ids ?? []).every((id) => sourceIds.has(id))) errors.push(`投资方背景来源无效：${investor}`);
+      const completedParts = [check.manager_or_parent, check.focus_and_stage, check.relevant_resources].filter((value) => String(value ?? "").trim()).length;
+      if (!String(check.institution_type ?? "").trim() || completedParts < 2) errors.push(`投资方背景未达到最低完整度：${investor}`);
     }
     const highValueFields = new Set((record.facts ?? []).filter((f) => f.valid_status === "当前有效" && f.evidence_status !== "待核线索").map((f) => f.target_field));
     if (highValueFields.size < 3) errors.push("可用于客户经理输出的已核字段少于3类，不能作为完整深检成果交付");

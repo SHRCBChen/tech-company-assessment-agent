@@ -89,7 +89,7 @@
     },
     "research_audit": {
       "type": "object",
-      "required": ["mode", "rounds", "anchor_queue", "weak_source_upgrade_queue", "conflict_queue", "coverage_scan_completed", "blank_field_followup_completed", "company_official_channels_checked", "government_attachment_lists_checked", "business_profile_checked", "visual_search_cards_checked", "industrialization_qualification_ip_deepened", "cross_column_scan_completed", "contact_cleanup_completed", "investor_background_deepened", "channel_checks", "field_checks", "person_anchors_found", "person_anchors_reviewed", "confirmed_investors", "investor_background_completed_for"],
+      "required": ["mode", "rounds", "anchor_queue", "weak_source_upgrade_queue", "conflict_queue", "coverage_scan_completed", "blank_field_followup_completed", "company_official_channels_checked", "government_attachment_lists_checked", "business_profile_checked", "visual_search_cards_checked", "industrialization_qualification_ip_deepened", "cross_column_scan_completed", "contact_cleanup_completed", "investor_background_deepened", "channel_checks", "field_checks", "person_anchors_found", "person_anchors_reviewed", "confirmed_investors", "investor_background_completed_for", "investor_checks"],
       "properties": {
         "mode": {"enum": ["full_deep_research", "incremental_update"]},
         "onsite_notes_ingested": {"type": "boolean"},
@@ -150,7 +150,23 @@
         "person_anchors_found": {"type": "array", "items": {"type": "string"}},
         "person_anchors_reviewed": {"type": "array", "items": {"type": "string"}},
         "confirmed_investors": {"type": "array", "items": {"type": "string"}},
-        "investor_background_completed_for": {"type": "array", "items": {"type": "string"}}
+        "investor_background_completed_for": {"type": "array", "items": {"type": "string"}},
+        "investor_checks": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["relationship_status", "relationship_source_ids", "institution_type", "manager_or_parent", "focus_and_stage", "relevant_resources", "background_source_ids"],
+            "properties": {
+              "relationship_status": {"enum": ["publicly_confirmed"]},
+              "relationship_source_ids": {"type": "array", "items": {"type": "string"}},
+              "institution_type": {"type": "string"},
+              "manager_or_parent": {"type": "string"},
+              "focus_and_stage": {"type": "string"},
+              "relevant_resources": {"type": "string"},
+              "background_source_ids": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        }
       }
     },
       "assessment": {

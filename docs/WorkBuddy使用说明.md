@@ -44,7 +44,7 @@ python -m pip install -r requirements.txt
 
 选择仓库中的：
 
-`workbuddy\batch-tech-company-assessment-workbuddy-skill.zip`
+`workbuddy\batch-tech-company-assessment-workbuddy-skill-v3.zip`
 
 导入后确认该技能处于启用状态。WorkBuddy官方说明支持通过本地技能包导入Skill；如当前版本界面名称略有变化，可在“技能”页面查找“添加技能”或“上传技能”。
 
@@ -135,6 +135,14 @@ python scripts/start_batch.py --input "企业名单及现场笔记.xlsx" --name 
 ### （三）粘贴启动指令
 
 将`workbuddy\首次任务提示词.txt`中的内容粘贴到任务中，并把文件名、批次名替换成实际内容。
+
+WorkBuddy必须先运行：
+
+```powershell
+python scripts/check_installation.py
+```
+
+只有返回`INSTALLATION_OK`才继续。若返回`OUTDATED_INSTALLATION`，说明当前任务文件夹仍是旧脚本；重新导入Skill并不能更新仓库脚本，必须同时更新整个仓库。
 
 推荐指令：
 

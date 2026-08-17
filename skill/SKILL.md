@@ -7,7 +7,7 @@ description: 批量导入科创企业或项目名单及大赛现场自由笔记�
 
 ## 开始前
 
-1. 解析项目根目录：优先读取环境变量`TECH_COMPANY_AGENT_ROOT`；否则从当前工作区向下或向上定位同时包含`scripts`、`config`和`schemas`的仓库目录。仍未找到时提醒用户运行仓库中的`install.ps1`或打开克隆后的仓库，不得使用开发者本机绝对路径。
+1. 解析项目根目录：优先读取环境变量`TECH_COMPANY_AGENT_ROOT`；否则从当前工作区向下或向上定位同时包含`scripts`、`config`和`schemas`的仓库目录。仍未找到时提醒用户运行仓库中的`install.ps1`或打开克隆后的仓库，不得使用开发者本机绝对路径。WorkBuddy开始任务后先运行`python scripts/check_installation.py`；未返回`INSTALLATION_OK`必须停止并提醒更新整个仓库，不能只依赖新Skill配旧脚本。
 2. 在Codex中完整执行`tech-competition-company-research`技能，写Excel时同时执行`Spreadsheets`技能；在WorkBuddy或其他Agent中完整读取本Skill及references，并使用其可用的网页搜索/浏览器。默认不用Wind，也不要求单独OpenAI API。
 3. 读取`config/deep-research-playbook.json`。每家企业均须完成六轮深检，不得依赖测试期旧Excel或历史深检版才能达标。
 4. 新建或续跑批次时阅读[公开检索与失败恢复](references/research-and-recovery.md)；生成成果或评级时阅读[成果、评级与报告](references/outputs-rating-and-report.md)；同步ima或整理交接包时阅读[ima与交接](references/ima-and-handoff.md)。
@@ -38,13 +38,14 @@ description: 批量导入科创企业或项目名单及大赛现场自由笔记�
    - 严格登记`R1_subject_mapping`、`R2_channel_coverage`、`R3_field_deepening`、`R4_anchor_expansion`、`R5_gap_and_conflict`、`R6_cross_column_and_output`。
    - 六轮必须记录各自实际使用的检索词/页面路径、增量事实ID和新增锚点；不得把同一组查询复制到六轮，不得使用`R1`—`R6`或`done`等简写冒充规定键名与`complete`状态。WorkBuddy不得凭文字自述“已完成”绕过记录审计。
    - 每打开一个来源都做全字段抽取；项目负责人、发明人、标准起草人、客户新闻、产品型号和融资报道均触发跨列反查。
-   - 对11列逐项写入`research_audit.field_checks`。有事实记`found+fact_ids`；无事实须有两条不同路径后才能记`searched_no_public_result`。
+   - 对11列逐项写入`research_audit.field_checks`，严格使用`{"status":"found","paths":[...],"fact_ids":[...]}`或`{"status":"searched_no_public_result","paths":[至少两条不同路径],"fact_ids":[]}`；不得自创`found:true`、`note`等替代结构。
    - 清空`anchor_queue`、`weak_source_upgrade_queue`和`conflict_queue`；保留无法消解的冲突双方及边界。
    - 生成报告前写入`assessment.track`、`assessment.development_stage`和`assessment.conclusion_chains`。每条结论链必须包含客观结论、要素间关系、支撑事实ID及可能改变判断的关键条件；不得以11列非空数量或机械加分代替分析。
    - 大赛现场笔记默认作为高可信一手信息参与评级，不因缺少公开网页而降为普通弱线索。只有融资到账、订单/营收/回款、量产/流片、客户定点和关键性能等会显著改变结论的事项，才转化为拜访核验点；存在明确冲突时保留冲突。
 3. 只有六轮、11列审计、现场笔记拆解与交叉核验、三类专项深化、跨列扫描和三队列全部完成，企业才能标`researched`；主体未闭合则标`mapping_blocked`。
    - 11列必须逐列写入`research_audit.field_checks`。有结果时登记事实ID；无结果时至少留下两条不同检索路径，Excel保持空白，不得写“公开无结果”“未详列”等占位语。
    - 可识别产品/场景时，竞争对手优先给出可核验的同类厂商名称，不能只写“国际厂商”“同类企业”等泛称。每个已确认投资方必须单独反查机构属性与产业资源，不能把多家机构合并成一句泛化背景。
+   - `confirmed_investors`只收录有公开投资关系证据的投资方；仅现场笔记、普通股东、潜在基金或媒体名单不得升级为已确认投资方。每家确认投资方在`investor_checks`登记关系来源、机构属性、管理/母集团、赛道阶段、相关资源和背景来源；机构属性必填，另外三项至少完成两项。
 4. 后续材料先转换为`visit-update.schema.json`，再运行：
    `node scripts/apply-visit-update.mjs --run "<批次目录>" --update "<审核后的增量.json>"`
    WorkBuddy或未安装Node.js的电脑改用：
