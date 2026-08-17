@@ -58,7 +58,7 @@ description: 批量导入科创企业或项目名单及大赛现场自由笔记�
 3. 有历史成果时做逐主张回归，分类为`publicly_reconfirmed`、`onsite_only`、`legacy_lead_unverified`、`conflicted`或`discarded_wrong_entity`；去向覆盖率必须为100%。历史成果不存在时仍执行同一深检门槛。
 4. Markdown全部完成并质检后，用户要求Word才运行：
    `python scripts/build-word-report.py <报告.md> <报告.docx>`
-   只交付DOCX，不交付PDF或内部渲染文件。
+   完整执行[成果、评级与报告](references/outputs-rating-and-report.md)中的Word版式与逐页渲染验收；只交付DOCX，不交付PDF或内部渲染文件。
 5. 本地质检通过后，把`ima-ready` Markdown正文创建为可编辑ima笔记，并以`media_type=11`自动关联知识库，无需逐次确认；不得仅作为Markdown文件上传。遇到同名笔记、删除/替换/移动、权限、DPAPI、登录、验证码、付费页或缺失企查查导出等需要用户动作的情况，必须立即说明具体对象和所需操作，不能静默降级。
 
 ## 不可违反的边界

@@ -259,6 +259,17 @@ def configure_document(doc: Document):
     pf.line_spacing = 1.5
     pf.first_line_indent = Pt(0)
 
+    note = get_or_add_style(doc, "报告说明")
+    set_style_font(note, CN_BODY, LATIN_FONT, 10.5)
+    pf = note.paragraph_format
+    pf.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    pf.space_before = Pt(0)
+    pf.space_after = Pt(9)
+    pf.line_spacing = 1.0
+    pf.first_line_indent = Pt(0)
+    pf.left_indent = Pt(12)
+    pf.right_indent = Pt(12)
+
     heading = get_or_add_style(doc, "一级标题")
     set_style_font(heading, CN_HEADING, LATIN_FONT, BODY_SIZE, bold=False)
     pf = heading.paragraph_format
@@ -325,6 +336,12 @@ def build_docx(source: Path, output: Path):
             else:
                 run = p.add_run(content)
                 set_run_font(run)
+            set_widow_control(p)
+            continue
+        if line.startswith("> "):
+            p = doc.add_paragraph(style="报告说明")
+            run = p.add_run(clean_inline_markdown(line[2:]))
+            set_run_font(run, CN_BODY, LATIN_FONT, 10.5)
             set_widow_control(p)
             continue
         content = clean_inline_markdown(line)
