@@ -22,11 +22,14 @@ New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 $results = @()
 for ($i = 0; $i -lt $files.Count; $i++) {
   $itemResult = Join-Path $logDir ("ima-sync-" + (Get-Date -Format "yyyyMMddHHmmssfff") + "-" + $i + ".json")
-  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "upload-file-worker.ps1") -ResultPath $itemResult -FileIndex $i -InputFolder ([IO.Path]::GetRelativePath($root, $readyDir))
+  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "upload-note-worker.ps1") -ResultPath $itemResult -FileIndex $i -InputFolder ([IO.Path]::GetRelativePath($root, $readyDir))
   if (-not (Test-Path -LiteralPath $itemResult)) { throw "ima上传未返回结果：$($files[$i].Name)" }
   $result = Get-Content -Raw -Encoding UTF8 -LiteralPath $itemResult | ConvertFrom-Json
   if ($result.status -eq "skipped_existing") {
-    $result | Add-Member -NotePropertyName next_action -NotePropertyValue "ima官方OpenAPI没有覆盖/删除接口；本地三件成果已更新，ima同名旧底稿需在界面替换后再核验。" -Force
+    $result | Add-Member -NotePropertyName next_action -NotePropertyValue "知识库中已有同名可编辑笔记；本地三件成果已更新，但官方OpenAPI未提供全文覆盖接口，需在ima界面确认替换后再核验。" -Force
+  }
+  if ($result.status -eq "legacy_file_replace_required") {
+    $result | Add-Member -NotePropertyName next_action -NotePropertyValue "知识库中仍有旧Markdown文件；请先在ima界面删除该旧文件，再重新运行同步以创建可编辑笔记。" -Force
   }
   $results += $result
   Write-Host ("[{0}/{1}] {2}: {3}" -f ($i + 1), $files.Count, $files[$i].Name, $result.status)
@@ -36,8 +39,8 @@ $summary = [ordered]@{
   approved_at = (Get-Date).ToString("o")
   run_path = $run
   uploaded = @($results | Where-Object {$_.status -eq "uploaded"}).Count
-  existing_requires_replace = @($results | Where-Object {$_.status -eq "skipped_existing"}).Count
-  failed = @($results | Where-Object {$_.status -eq "failed"}).Count
+  existing_requires_replace = @($results | Where-Object {$_.status -in @("skipped_existing","legacy_file_replace_required")}).Count
+  failed = @($results | Where-Object {$_.status -in @("failed","startup_failed","note_created_kb_add_failed")}).Count
   items = $results
 }
 $summaryPath = Join-Path $logDir ("approved-ima-sync-" + (Get-Date -Format "yyyyMMdd-HHmmss") + ".json")
