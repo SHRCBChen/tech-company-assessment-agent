@@ -10,6 +10,8 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill, Side, Border
 from openpyxl.utils import get_column_letter
 
+from strict_validation import validate_record
+
 
 FIELDS = [
     "核心人员", "核心人员背景", "核心人员公开联系方式", "主要产品", "核心技术及应用场景",
@@ -113,7 +115,8 @@ def validate(record: dict) -> list[str]:
     for chain in chains:
         if not clean(chain.get("conclusion")) or not clean(chain.get("reasoning")) or not chain.get("basis_fact_ids"):
             issues.append("invalid conclusion chain")
-    return issues
+    issues.extend(validate_record(record, FIELDS))
+    return list(dict.fromkeys(issues))
 
 
 def main() -> None:
@@ -130,8 +133,25 @@ def main() -> None:
         if issues:
             blocked[record["enterprise_name"]] = issues
         records.append(record)
-    if blocked:
-        raise SystemExit(json.dumps({"status": "BLOCKED", "companies": blocked}, ensure_ascii=False, indent=2))
+    review_dir = run_dir / "review"
+    review_dir.mkdir(parents=True, exist_ok=True)
+    batch_issues = []
+    if manifest.get("missing_onsite_notes"):
+        batch_issues.append("企业名单中仍有未绑定现场笔记的企业")
+    if manifest.get("unmatched_note_names"):
+        batch_issues.append("现场笔记中仍有未匹配的企业/项目名称")
+    if manifest.get("ambiguous_word_paragraphs"):
+        batch_issues.append("Word现场笔记仍有歧义段落")
+    if manifest.get("pending_ocr_files"):
+        batch_issues.append("图片或PDF现场笔记尚未完成OCR/人工读取")
+    validation = {
+        "status": "PASSED" if not blocked and not batch_issues else "BLOCKED",
+        "batch_issues": batch_issues,
+        "companies": blocked,
+    }
+    (review_dir / "validation.json").write_text(json.dumps(validation, ensure_ascii=False, indent=2), encoding="utf-8")
+    if blocked or batch_issues:
+        raise SystemExit(json.dumps(validation, ensure_ascii=False, indent=2))
     output = run_dir / "deliverables"
     excel_dir, report_dir, dossier_dir = output / "excel", output / "reports", output / "ima-ready"
     for directory in (excel_dir, report_dir, dossier_dir):

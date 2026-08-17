@@ -36,12 +36,15 @@ description: 批量导入科创企业或项目名单及大赛现场自由笔记�
    - 原样保存现场笔记（图片/PDF同时保留原件路径与OCR原文），另建规范化理解后再拆为最小事实单元；把人名、型号、客户、投资方、轮次、资质、专利、量产及经营指标加入检索锚点。一般术语可按上下文粗略纠正，如`LOT→IoT`、`tie1/tie2→Tier 1/Tier 2`、`Mawell→Marvell`；不得改写原文。
    - 先闭合`项目/品牌→法律主体→负责人→曾用名/关联主体`。主体不明时停止迁移融资、客户、资质、知识产权和人员事实。
    - 严格登记`R1_subject_mapping`、`R2_channel_coverage`、`R3_field_deepening`、`R4_anchor_expansion`、`R5_gap_and_conflict`、`R6_cross_column_and_output`。
+   - 六轮必须记录各自实际使用的检索词/页面路径、增量事实ID和新增锚点；不得把同一组查询复制到六轮，不得使用`R1`—`R6`或`done`等简写冒充规定键名与`complete`状态。WorkBuddy不得凭文字自述“已完成”绕过记录审计。
    - 每打开一个来源都做全字段抽取；项目负责人、发明人、标准起草人、客户新闻、产品型号和融资报道均触发跨列反查。
    - 对11列逐项写入`research_audit.field_checks`。有事实记`found+fact_ids`；无事实须有两条不同路径后才能记`searched_no_public_result`。
    - 清空`anchor_queue`、`weak_source_upgrade_queue`和`conflict_queue`；保留无法消解的冲突双方及边界。
    - 生成报告前写入`assessment.track`、`assessment.development_stage`和`assessment.conclusion_chains`。每条结论链必须包含客观结论、要素间关系、支撑事实ID及可能改变判断的关键条件；不得以11列非空数量或机械加分代替分析。
    - 大赛现场笔记默认作为高可信一手信息参与评级，不因缺少公开网页而降为普通弱线索。只有融资到账、订单/营收/回款、量产/流片、客户定点和关键性能等会显著改变结论的事项，才转化为拜访核验点；存在明确冲突时保留冲突。
 3. 只有六轮、11列审计、现场笔记拆解与交叉核验、三类专项深化、跨列扫描和三队列全部完成，企业才能标`researched`；主体未闭合则标`mapping_blocked`。
+   - 11列必须逐列写入`research_audit.field_checks`。有结果时登记事实ID；无结果时至少留下两条不同检索路径，Excel保持空白，不得写“公开无结果”“未详列”等占位语。
+   - 可识别产品/场景时，竞争对手优先给出可核验的同类厂商名称，不能只写“国际厂商”“同类企业”等泛称。每个已确认投资方必须单独反查机构属性与产业资源，不能把多家机构合并成一句泛化背景。
 4. 后续材料先转换为`visit-update.schema.json`，再运行：
    `node scripts/apply-visit-update.mjs --run "<批次目录>" --update "<审核后的增量.json>"`
    WorkBuddy或未安装Node.js的电脑改用：
@@ -54,7 +57,7 @@ description: 批量导入科创企业或项目名单及大赛现场自由笔记�
    - `deliverables/excel/*｜企业信息主表.xlsx`
    - `deliverables/ima-ready/*｜当前事实底稿.md`
    - `deliverables/reports/*｜企业初评报告.md`
-   非Codex环境改用`python scripts/build_deliverables.py --run "<批次目录>"`生成同类成果。
+   非Codex环境改用`python scripts/build_deliverables.py --run "<批次目录>"`生成同类成果。Python通道执行与Node通道相同的硬校验；若被阻断，先按`review/validation.json`补检，禁止手工删改错误或直接绕过生成。
 2. 检查`review/validation.json`并预览Excel。任一企业未通过六轮、字段审计、投资机构逐家背景或来源边界时，整批正式交付阻断，不能先给一份看似完成的部分成品。
 3. 有历史成果时做逐主张回归，分类为`publicly_reconfirmed`、`onsite_only`、`legacy_lead_unverified`、`conflicted`或`discarded_wrong_entity`；去向覆盖率必须为100%。历史成果不存在时仍执行同一深检门槛。
 4. Markdown全部完成并质检后，用户要求Word才运行：

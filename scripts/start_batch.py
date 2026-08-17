@@ -128,6 +128,19 @@ def match_key(value: str) -> str:
     return re.sub(r"\s+", "", unicodedata.normalize("NFKC", value)).casefold()
 
 
+def resolve_note_name(note_name: str, names_by_key: dict[str, str]) -> str:
+    """Resolve a separate-note name conservatively; aliases bind only when unique."""
+    key = match_key(note_name)
+    if key in names_by_key:
+        return names_by_key[key]
+    candidates = set()
+    for enterprise in names_by_key.values():
+        aliases = name_aliases(enterprise)
+        if key in aliases or (len(key) >= 2 and any(key in alias for alias in aliases)):
+            candidates.add(enterprise)
+    return next(iter(candidates)) if len(candidates) == 1 else ""
+
+
 def empty_audit() -> dict:
     round_ids = [
         "R1_subject_mapping", "R2_channel_coverage", "R3_field_deepening",
@@ -241,7 +254,7 @@ def main() -> None:
                 note = text(row.get(separate_note_header))
                 if not note_name or not note:
                     continue
-                matched_name = names_by_key.get(match_key(note_name))
+                matched_name = resolve_note_name(note_name, names_by_key)
                 if not matched_name:
                     if note_name not in seen_unmatched:
                         unmatched_note_names.append(note_name)

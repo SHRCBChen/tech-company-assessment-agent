@@ -174,6 +174,8 @@ WorkBuddy可自行继续处理的情况，不需要逐步确认。出现下列�
 7. 评级按赛道和发展阶段形成至少三条事实—关系—结论链；
 8. `build_deliverables.py`没有返回`BLOCKED`。
 
+此外，验收文件中六轮键名必须是`R1_subject_mapping`至`R6_cross_column_and_output`，状态必须是`complete`或`not_applicable`；不能使用`R1`—`R6`与`done`简写，同一组检索词也不能复制到多轮。`research_audit.field_checks`必须包含全部11类字段。
+
 如果构建脚本返回`BLOCKED`，说明事实记录或评价链未达到交付门槛，应让WorkBuddy根据错误信息继续补检，不能手工删除检查项绕过。
 
 ## 六、三类成果在哪里
