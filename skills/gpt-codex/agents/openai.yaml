@@ -1,5 +1,5 @@
 interface:
-  display_name: "科创企业批量检索与初评"
+  display_name: "GPT/Codex科创企业批量检索与初评"
   short_description: "导入企业及现场笔记，生成Excel、ima底稿和初评报告"
   default_prompt: "Use $batch-tech-company-assessment to 导入企业名单Excel及现场笔记附件（Excel、Word、图片或PDF均可），完成公开深检并生成Excel、ima底稿和初评报告。"
 policy:

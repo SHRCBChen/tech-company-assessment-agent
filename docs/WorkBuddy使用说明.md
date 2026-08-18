@@ -44,7 +44,7 @@ python -m pip install -r requirements.txt
 
 选择仓库中的：
 
-`workbuddy\batch-tech-company-assessment-workbuddy-skill-v4.zip`
+`packages\workbuddy-skill.zip`
 
 导入后确认该技能处于启用状态。WorkBuddy官方说明支持通过本地技能包导入Skill；如当前版本界面名称略有变化，可在“技能”页面查找“添加技能”或“上传技能”。
 
@@ -147,7 +147,7 @@ python scripts/check_installation.py
 推荐指令：
 
 ```text
-请完整读取并严格执行 skill/SKILL.md 及其 references，使用WorkBuddy可用的真实网页搜索/浏览器处理“<企业名单文件.xlsx>”及全部现场笔记附件（Excel/CSV、Word .docx、图片或PDF均可）。
+请完整读取并严格执行已导入的WorkBuddy Skill及其references，使用官方企查查连接器及可用的真实网页搜索/浏览器处理“<企业名单文件.xlsx>”及全部现场笔记附件（Excel/CSV、Word .docx、图片或PDF均可）。
 
 先用 python scripts/start_batch.py --input "<企业名单文件.xlsx>" --notes "<现场笔记附件1>" --notes "<现场笔记附件2>" --name "<批次名称>" --require-onsite-notes 建立批次。对Word按企业标题拆分；对图片/PDF先视觉识别原文，再按文字中的企业/项目名称匹配。检查并报告无法匹配的笔记、重名冲突、Word未绑定段落、图片/PDF待识别材料和缺失笔记，不得仅凭文件名或上下文猜测绑定；随后逐家完成主体映射、六轮公开深检、11类字段审计、现场笔记拆解与交叉核验、投资机构逐家背景核验，以及事实—关系—结论链。所有事实、来源、审计状态和评价依据写入本批次records，不要直接从Excel拼报告。
 
@@ -218,7 +218,7 @@ python scripts/build-word-report.py "报告.md" "报告.docx"
 推荐指令：
 
 ```text
-请读取 skill/SKILL.md、schemas/visit-update.schema.json 和本批次现有records。将“<拜访记录或企业材料>”保留原文，区分企业陈述、现场观察、内部评价和证明材料，生成审核用增量JSON。不要静默覆盖冲突事实；新事实替代旧事实时写明replaces_fact_id。
+请读取已导入的WorkBuddy Skill、schemas/visit-update.schema.json和本批次现有records。将“<拜访记录或企业材料>”保留原文，区分企业陈述、现场观察、内部评价和证明材料，生成审核用增量JSON。不要静默覆盖冲突事实；新事实替代旧事实时写明replaces_fact_id。
 
 审核无误后，使用 python scripts/apply_visit_update.py 写入原批次，再运行 python scripts/build_deliverables.py 重建Excel、ima底稿和报告。报告评价必须根据更新后的客观事实重新判断，不沿用旧结论。
 ```

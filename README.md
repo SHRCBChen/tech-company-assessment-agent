@@ -1,6 +1,6 @@
 # 科创企业批量检索与初评Agent
 
-> WorkBuddy同事请先阅读：[WorkBuddy使用说明书](docs/WorkBuddy使用说明.md)。仓库同时提供可直接导入WorkBuddy的Skill包和两份任务提示词。
+> 本仓库将GPT/Codex与WorkBuddy的Skill分开维护。WorkBuddy同事请先阅读：[WorkBuddy使用说明书](docs/WorkBuddy使用说明.md)。
 
 输入企业/项目名单和大赛现场自由笔记（支持同一文件或分开上传并按名称匹配），由AI Agent完成主体映射和公开深检，再从同一事实记录生成三类成果：
 
@@ -12,8 +12,8 @@
 
 ## 支持环境
 
-- **Codex**：运行`install.ps1`安装Skill，可使用仓库内Node脚本和Codex自带表格运行环境。
-- **WorkBuddy或其他可执行本地脚本的Agent**：让Agent完整阅读`skill/SKILL.md`，使用Python入口处理Excel和构建成果；公开搜索能力由所选模型/搜索工具提供。
+- **GPT/Codex**：使用`skills/gpt-codex`，运行`install.ps1`安装，可调用仓库内Node脚本和Codex自带表格运行环境。
+- **WorkBuddy**：导入`packages/workbuddy-skill.zip`，使用Python入口、官方企查查连接器及可用的网页搜索/浏览器。
 - Windows PowerShell 5.1或更高版本（ima同步）；Python 3.10或更高版本。
 
 ## 一、下载与安装
@@ -25,7 +25,7 @@ python -m pip install -r requirements.txt
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
-安装完成后重启Codex或终端。WorkBuddy无需安装Codex Skill，但必须在任务开始时读取`skill/SKILL.md`及其引用文件。
+安装完成后重启Codex或终端。WorkBuddy单独导入`packages/workbuddy-skill.zip`，不要导入GPT/Codex版。
 
 ## 二、输入文件
 
@@ -52,7 +52,7 @@ python scripts/start_batch.py --input "企业名单.xlsx" --notes "现场笔记.
 
 命令会生成`runs/<批次>/manifest.json`和逐企业事实记录。随后对Agent下达：
 
-> 完整阅读skill/SKILL.md，处理刚创建的批次。逐家完成六轮公开深检、11列审计、赛道和发展阶段判断，以及事实—关系—结论链；不要跳过现场笔记。
+> 完整阅读当前平台Skill及其references，处理刚创建的批次。逐家完成六轮公开深检、11列审计、赛道和发展阶段判断，以及事实—关系—结论链；不要跳过现场笔记。
 
 ## 四、构建三类成果
 

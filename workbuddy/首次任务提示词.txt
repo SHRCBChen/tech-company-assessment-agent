@@ -1,4 +1,4 @@
-请完整读取并严格执行 skill/SKILL.md 及其 references，使用WorkBuddy可用的真实网页搜索/浏览器处理“<企业名单文件.xlsx>”及其全部现场笔记附件（Excel/CSV、Word .docx、图片或PDF均可）。第一步先运行`python scripts/check_installation.py`；只有返回`INSTALLATION_OK`才继续，若提示旧版工具立即停止并告诉我更新整个仓库，不能用新Skill搭配旧脚本。
+请完整读取并严格执行已导入的WorkBuddy Skill及其references，使用官方企查查连接器及可用的真实网页搜索/浏览器处理“<企业名单文件.xlsx>”及其全部现场笔记附件（Excel/CSV、Word .docx、图片或PDF均可）。第一步先运行`python scripts/check_installation.py`；只有返回`INSTALLATION_OK`才继续，若提示工具不匹配立即停止并告诉我更新整个仓库，不能用新Skill搭配旧脚本。
 
 先用 python scripts/start_batch.py --input "<企业名单文件.xlsx>" --notes "<现场笔记附件1>" --notes "<现场笔记附件2>" --name "<批次名称>" --require-onsite-notes 建立批次。对Word按企业标题拆分；对图片/PDF先视觉识别原文，再按文字中的企业/项目名称匹配。检查并报告无法匹配的笔记、重名冲突、Word未绑定段落、图片/PDF待识别材料和缺失笔记，不得仅凭文件名或上下文猜测绑定；随后逐家完成主体映射、六轮公开深检、11类字段审计、现场笔记拆解与交叉核验、投资机构逐家背景核验，以及事实—关系—结论链。所有事实、来源、审计状态和评价依据写入本批次records，不要直接从Excel拼报告。
 

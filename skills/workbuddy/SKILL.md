@@ -1,0 +1,78 @@
+---
+name: workbuddy-tech-company-assessment
+description: 在WorkBuddy中批量导入科创企业或项目名单及大赛现场自由笔记，优先调用官方企查查连接器并结合公开网页完成主体映射、六轮深检和跨列事实提取，再生成11类企业信息Excel、ima当前事实底稿及1—2页企业初评报告；也支持拜访后同步更新三类成果。适用于WorkBuddy中的“一键检索企业名单”“调用企查查连接器”“交付三件成果”“继续批次”和“拜访后更新”等任务。
+---
+
+# WorkBuddy科创企业批量检索与初评
+
+## 开始前
+
+1. 从当前工作区定位同时包含`scripts`、`config`和`schemas`的仓库目录，不得使用开发者本机绝对路径。开始任务后先运行`python scripts/check_installation.py`；未返回`INSTALLATION_OK`必须停止并提醒更新整个仓库，不能只依赖新Skill配旧脚本。
+2. 完整读取本Skill及references，优先调用WorkBuddy官方企查查连接器，并结合可用的真实网页搜索或浏览器。默认不用Wind，不要求企查查MCP、企查查API Key或OpenAI API。
+3. 读取`config/deep-research-playbook.json`。每家企业均须完成六轮深检，不得依赖测试期旧Excel或历史深检版才能达标。
+4. 新建或续跑批次时阅读[公开检索与失败恢复](references/research-and-recovery.md)；生成成果或评级时阅读[成果、评级与报告](references/outputs-rating-and-report.md)；同步ima或整理交接包时阅读[ima与交接](references/ima-and-handoff.md)。
+5. 统一事实记录是Excel、ima底稿和初评报告的唯一生成输入。旧Excel、旧报告和旧知识库只能作为检索锚点或回归测试，不能反向覆盖当前事实记录。
+
+## 输入与入口
+
+- 新名单：支持企业/项目名称与现场笔记在同一Excel同一行，也支持名单Excel/CSV与多个笔记附件分开上传。Excel/CSV笔记按名称列绑定；Word(.docx)按企业名称或唯一简称标题分段；图片/PDF必须先视觉识别文字，再按其中的企业/项目名称绑定。现场笔记按自由速记宽松理解，允许错别字、同音字、英文拼写错误、简称、缩写、语序残缺和OCR误识别；结合同行内容、企业业务、公开检索结果和常见行业术语推断，不要求字面精确匹配。未匹配笔记、重名冲突、Word未绑定段落和整体不可辨识的笔记必须显式列出。现场笔记是首批高价值材料，不是后续增量或“企业交流记录”。
+- 用户说“继续”：读取`runs/latest-run.txt`，从未完成状态续跑，不重建已完成企业。
+- 后续材料：仅将分支行拜访记录、企业证明材料或明确说明为补交的现场笔记作为增量；保留原文并区分现场陈述、现场观察、内部评价和公开确认。
+- 企查查预检：先把已映射法律主体与本批企查查导出及`/firm/`链接逐一核对。漏导出时立即列出企业名提醒用户；项目尚未映射法律主体时先标`mapping_blocked`，不得误报漏导出。
+- WorkBuddy中优先调用内置的官方“企查查”连接器完成主体、主要人员、知识产权、融资和联系方式核验，再与公开网页交叉抽取；开关未启用、授权失效、调用受限或字段不可用时立即提醒用户进入“管理连接器”处理，不静默跳过。官方连接器已启用时不得再要求企查查MCP或API Key。
+- 企查查企业详情若提供官网链接，立即取得真实目标URL并进入官网；继续打开产品、新闻/案例、下载/PDF、资质荣誉、关于团队等具体页面。企查查只作为官网发现入口，不能把“存在官网链接”、跳转页或官网首页本身记为官网检索完成。
+
+## 执行
+
+1. 创建批次：
+   `python scripts/start_batch.py --input "<企业名称与现场笔记文件>" --name "<批次名>" --require-onsite-notes`
+   名单和笔记分开时：
+   `python scripts/start_batch.py --input "<企业名单文件>" --notes "<现场笔记文件>" --name "<批次名>" --require-onsite-notes`
+   多份笔记附件使用（`--notes`可重复）：
+   `python scripts/start_batch.py --input "<企业名单文件>" --notes "<现场笔记.docx>" --notes "<现场照片.jpg>" --name "<批次名>" --require-onsite-notes`
+   企业较多时建立完整批次，默认每5家一波推进；批量只改变调度，不降低逐家深检深度。
+2. 对每家企业：
+   - 原样保存现场笔记（图片/PDF同时保留原件路径与OCR原文），另建规范化理解后再拆为最小事实单元；把人名、型号、客户、投资方、轮次、资质、专利、量产及经营指标加入检索锚点。一般术语可按上下文粗略纠正，如`LOT→IoT`、`tie1/tie2→Tier 1/Tier 2`、`Mawell→Marvell`；不得改写原文。
+   - 先闭合`项目/品牌→法律主体→负责人→曾用名/关联主体`。主体不明时停止迁移融资、客户、资质、知识产权和人员事实。
+   - 严格登记`R1_subject_mapping`、`R2_channel_coverage`、`R3_field_deepening`、`R4_anchor_expansion`、`R5_gap_and_conflict`、`R6_cross_column_and_output`。
+   - 六轮必须记录各自实际使用的检索词/页面路径、增量事实ID和新增锚点；不得把同一组查询复制到六轮，不得使用`R1`—`R6`或`done`等简写冒充规定键名与`complete`状态。WorkBuddy不得凭文字自述“已完成”绕过记录审计。
+   - 每打开一个来源都做全字段抽取；项目负责人、发明人、标准起草人、客户新闻、产品型号和融资报道均触发跨列反查。
+   - 对11列逐项写入`research_audit.field_checks`，严格使用`{"status":"found","paths":[...],"fact_ids":[...]}`或`{"status":"searched_no_public_result","paths":[至少两条不同路径],"fact_ids":[]}`；不得自创`found:true`、`note`等替代结构。
+   - 每个`channel_checks`严格使用`status/paths/source_ids/notes`。取得具体页面时标`checked_with_sources`并绑定来源ID；无结果时标`searched_no_public_result`并保留两条具体路径。`企查查/WebSearch`、`官网检索`等泛称不算路径。
+   - 清空`anchor_queue`、`weak_source_upgrade_queue`和`conflict_queue`；保留无法消解的冲突双方及边界。
+   - 生成报告前写入`assessment.track`、`assessment.development_stage`和`assessment.conclusion_chains`。每条结论链必须包含客观结论、要素间关系、支撑事实ID及可能改变判断的关键条件；不得以11列非空数量或机械加分代替分析。
+   - 大赛现场笔记默认作为高可信一手信息参与评级，不因缺少公开网页而降为普通弱线索。只有融资到账、订单/营收/回款、量产/流片、客户定点和关键性能等会显著改变结论的事项，才转化为拜访核验点；存在明确冲突时保留冲突。
+3. 只有六轮、11列审计、现场笔记拆解与交叉核验、三类专项深化、跨列扫描和三队列全部完成，企业才能标`researched`；主体未闭合则标`mapping_blocked`。
+   - 11列必须逐列写入`research_audit.field_checks`。有结果时登记事实ID；无结果时至少留下两条不同检索路径，Excel保持空白，不得写“公开无结果”“未详列”等占位语。
+   - 可识别产品/场景时，竞争对手优先给出可核验的同类厂商名称，不能只写“国际厂商”“同类企业”等泛称。每个已确认投资方必须单独反查机构属性与产业资源，不能把多家机构合并成一句泛化背景。
+   - `confirmed_investors`只收录有公开投资关系证据的投资方；仅现场笔记、普通股东、潜在基金或媒体名单不得升级为已确认投资方。每家确认投资方在`investor_checks`登记关系来源、机构属性、管理/母集团、赛道阶段、相关资源和背景来源；机构属性必填，另外三项至少完成两项。
+   - 投资关系来源与机构背景来源原则上分开；机构背景至少增加一条机构官网、政府基金公告、管理人或母集团来源。所有企业填写`historical_financing_scan`，按企业全称/曾用名、创始人、机构股东及投资方被投组合至少执行两条历史融资路径。
+   - 产业化事实出现客户、合作、送样、定点、订单、出货、中标或供应关系时，事实层登记`relationship_subject`与`relationship_type`。关联公司客户不得迁移为目标公司客户；确需保留时明确写“关联公司客户”。
+   - 主要产品一旦确认，上下游不得为空；产品及应用场景一旦确认，竞争对手不得为空。核心人员背景不得只写“来自大厂/经验丰富”，至少与一名已列核心人员逐人对应。科创资质不得用参股、孵化或行业分类替代；知识产权取得数量后必须继续查代表名称、编号、状态或技术方向。
+4. 后续材料先转换为`visit-update.schema.json`，再运行：
+   `python scripts/apply_visit_update.py --run "<批次目录>" --update "<审核后的增量.json>"`
+   新事实替代旧事实时写`replaces_fact_id`；不能判断时保留冲突，不静默覆盖。
+
+## 构建、质检与交付
+
+1. 运行`python scripts/build_deliverables.py --run "<批次目录>"`，生成：
+   - `deliverables/excel/*｜企业信息主表.xlsx`
+   - `deliverables/ima-ready/*｜当前事实底稿.md`
+   - `deliverables/reports/*｜企业初评报告.md`
+   Python通道执行完整硬校验；若被阻断，先按`review/validation.json`补检，禁止手工删改错误或直接绕过生成。
+2. 检查`review/validation.json`并预览Excel。任一企业未通过六轮、字段审计、投资机构逐家背景或来源边界时，整批正式交付阻断，不能先给一份看似完成的部分成品。
+3. 有历史成果时做逐主张回归，分类为`publicly_reconfirmed`、`onsite_only`、`legacy_lead_unverified`、`conflicted`或`discarded_wrong_entity`；去向覆盖率必须为100%。历史成果不存在时仍执行同一深检门槛。
+4. Markdown全部完成并质检后，用户要求Word才运行：
+   `python scripts/build-word-report.py <报告.md> <报告.docx>`
+   完整执行[成果、评级与报告](references/outputs-rating-and-report.md)中的Word版式与逐页渲染验收；只交付DOCX，不交付PDF或内部渲染文件。
+5. 本地质检通过后，把`ima-ready` Markdown正文创建为可编辑ima笔记，并以`media_type=11`自动关联知识库，无需逐次确认；不得仅作为Markdown文件上传。遇到同名笔记、删除/替换/移动、权限、DPAPI、登录、验证码、付费页或缺失企查查导出等需要用户动作的情况，必须立即说明具体对象和所需操作，不能静默降级。
+
+## 不可违反的边界
+
+- Excel仅保留企业/项目标识列和11类信息，不加入评级、来源、日志、风险项、社保/员工人数或说明页。
+- 公司总机、客服、销售、招聘电话和公共邮箱不得进入“核心人员公开联系方式”。
+- 合作、送样、定点、中标、量产和客户必须区分；融资、拟融资、老股转让、项目经费和中标额必须区分。
+- 大赛信息只用于消歧，不重复写入科创资质。参保/员工人数可留在本地及ima作为团队规模背景，不进入Excel或报告，也不作为评级依据。
+- ima实行一家企业一条可编辑的当前事实底稿笔记；不放完整初评、拜访重点或建联建议。Agent正式启用前不写`audience`、schema/file版本或版本记录。
+- A/B/C/D是企业潜力与后续调研优先级，不是信用评级，也不构成授信、投资或合作结论。
+- A类表示“最值得优先调研和介入”，不表示最成熟或风险最低。不同赛道按各自发展阶段里程碑评价；覆盖11类信息不等于平均使用11类信息。

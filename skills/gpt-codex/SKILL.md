@@ -7,8 +7,8 @@ description: 批量导入科创企业或项目名单及大赛现场自由笔记�
 
 ## 开始前
 
-1. 解析项目根目录：优先读取环境变量`TECH_COMPANY_AGENT_ROOT`；否则从当前工作区向下或向上定位同时包含`scripts`、`config`和`schemas`的仓库目录。仍未找到时提醒用户运行仓库中的`install.ps1`或打开克隆后的仓库，不得使用开发者本机绝对路径。WorkBuddy开始任务后先运行`python scripts/check_installation.py`；未返回`INSTALLATION_OK`必须停止并提醒更新整个仓库，不能只依赖新Skill配旧脚本。
-2. 在Codex中完整执行`tech-competition-company-research`技能，写Excel时同时执行`Spreadsheets`技能；在WorkBuddy或其他Agent中完整读取本Skill及references，并使用其可用的网页搜索/浏览器。默认不用Wind，也不要求单独OpenAI API。
+1. 解析项目根目录：优先读取环境变量`TECH_COMPANY_AGENT_ROOT`；否则从当前工作区向下或向上定位同时包含`scripts`、`config`和`schemas`的仓库目录。仍未找到时提醒用户运行仓库中的`install.ps1`或打开克隆后的仓库，不得使用开发者本机绝对路径。
+2. 在Codex中完整执行`tech-competition-company-research`技能，写Excel时同时执行`Spreadsheets`技能，并使用可用的网页搜索或已登录浏览器。默认不用Wind，也不要求单独OpenAI API。
 3. 读取`config/deep-research-playbook.json`。每家企业均须完成六轮深检，不得依赖测试期旧Excel或历史深检版才能达标。
 4. 新建或续跑批次时阅读[公开检索与失败恢复](references/research-and-recovery.md)；生成成果或评级时阅读[成果、评级与报告](references/outputs-rating-and-report.md)；同步ima或整理交接包时阅读[ima与交接](references/ima-and-handoff.md)。
 5. 统一事实记录是Excel、ima底稿和初评报告的唯一生成输入。旧Excel、旧报告和旧知识库只能作为检索锚点或回归测试，不能反向覆盖当前事实记录。
@@ -19,7 +19,6 @@ description: 批量导入科创企业或项目名单及大赛现场自由笔记�
 - 用户说“继续”：读取`runs/latest-run.txt`，从未完成状态续跑，不重建已完成企业。
 - 后续材料：仅将分支行拜访记录、企业证明材料或明确说明为补交的现场笔记作为增量；保留原文并区分现场陈述、现场观察、内部评价和公开确认。
 - 企查查预检：先把已映射法律主体与本批企查查导出及`/firm/`链接逐一核对。漏导出时立即列出企业名提醒用户；项目尚未映射法律主体时先标`mapping_blocked`，不得误报漏导出。
-- WorkBuddy中优先调用内置的官方“企查查”连接器完成主体、主要人员、知识产权、融资和联系方式核验，再与公开网页交叉抽取；开关未启用、授权失效、调用受限或字段不可用时立即提醒用户进入“管理连接器”处理，不静默跳过。官方连接器已启用时不得再要求企查查MCP或API Key。
 - 企查查企业详情若提供官网链接，立即取得真实目标URL并进入官网；继续打开产品、新闻/案例、下载/PDF、资质荣誉、关于团队等具体页面。企查查只作为官网发现入口，不能把“存在官网链接”、跳转页或官网首页本身记为官网检索完成。
 
 ## 执行
@@ -28,16 +27,12 @@ description: 批量导入科创企业或项目名单及大赛现场自由笔记�
    `node scripts/start-batch.mjs --input "<企业名称与现场笔记文件>" --name "<批次名>" --require-onsite-notes`
    名单和笔记分开时：
    `node scripts/start-batch.mjs --input "<企业名单文件>" --notes "<现场笔记文件>" --name "<批次名>" --require-onsite-notes`
-   非Codex环境或没有`@oai/artifact-tool`时改用：
-   `python scripts/start_batch.py --input "<企业名称与现场笔记文件>" --name "<批次名>" --require-onsite-notes`
-   WorkBuddy分开上传时改用（`--notes`可重复）：
-   `python scripts/start_batch.py --input "<企业名单文件>" --notes "<现场笔记.docx>" --notes "<现场照片.jpg>" --name "<批次名>" --require-onsite-notes`
    企业较多时建立完整批次，默认每5家一波推进；批量只改变调度，不降低逐家深检深度。
 2. 对每家企业：
    - 原样保存现场笔记（图片/PDF同时保留原件路径与OCR原文），另建规范化理解后再拆为最小事实单元；把人名、型号、客户、投资方、轮次、资质、专利、量产及经营指标加入检索锚点。一般术语可按上下文粗略纠正，如`LOT→IoT`、`tie1/tie2→Tier 1/Tier 2`、`Mawell→Marvell`；不得改写原文。
    - 先闭合`项目/品牌→法律主体→负责人→曾用名/关联主体`。主体不明时停止迁移融资、客户、资质、知识产权和人员事实。
    - 严格登记`R1_subject_mapping`、`R2_channel_coverage`、`R3_field_deepening`、`R4_anchor_expansion`、`R5_gap_and_conflict`、`R6_cross_column_and_output`。
-   - 六轮必须记录各自实际使用的检索词/页面路径、增量事实ID和新增锚点；不得把同一组查询复制到六轮，不得使用`R1`—`R6`或`done`等简写冒充规定键名与`complete`状态。WorkBuddy不得凭文字自述“已完成”绕过记录审计。
+   - 六轮必须记录各自实际使用的检索词/页面路径、增量事实ID和新增锚点；不得把同一组查询复制到六轮，不得使用`R1`—`R6`或`done`等简写冒充规定键名与`complete`状态。
    - 每打开一个来源都做全字段抽取；项目负责人、发明人、标准起草人、客户新闻、产品型号和融资报道均触发跨列反查。
    - 对11列逐项写入`research_audit.field_checks`，严格使用`{"status":"found","paths":[...],"fact_ids":[...]}`或`{"status":"searched_no_public_result","paths":[至少两条不同路径],"fact_ids":[]}`；不得自创`found:true`、`note`等替代结构。
    - 每个`channel_checks`严格使用`status/paths/source_ids/notes`。取得具体页面时标`checked_with_sources`并绑定来源ID；无结果时标`searched_no_public_result`并保留两条具体路径。`企查查/WebSearch`、`官网检索`等泛称不算路径。
@@ -53,8 +48,6 @@ description: 批量导入科创企业或项目名单及大赛现场自由笔记�
    - 主要产品一旦确认，上下游不得为空；产品及应用场景一旦确认，竞争对手不得为空。核心人员背景不得只写“来自大厂/经验丰富”，至少与一名已列核心人员逐人对应。科创资质不得用参股、孵化或行业分类替代；知识产权取得数量后必须继续查代表名称、编号、状态或技术方向。
 4. 后续材料先转换为`visit-update.schema.json`，再运行：
    `node scripts/apply-visit-update.mjs --run "<批次目录>" --update "<审核后的增量.json>"`
-   WorkBuddy或未安装Node.js的电脑改用：
-   `python scripts/apply_visit_update.py --run "<批次目录>" --update "<审核后的增量.json>"`
    新事实替代旧事实时写`replaces_fact_id`；不能判断时保留冲突，不静默覆盖。
 
 ## 构建、质检与交付
@@ -63,7 +56,6 @@ description: 批量导入科创企业或项目名单及大赛现场自由笔记�
    - `deliverables/excel/*｜企业信息主表.xlsx`
    - `deliverables/ima-ready/*｜当前事实底稿.md`
    - `deliverables/reports/*｜企业初评报告.md`
-   非Codex环境改用`python scripts/build_deliverables.py --run "<批次目录>"`生成同类成果。Python通道执行与Node通道相同的硬校验；若被阻断，先按`review/validation.json`补检，禁止手工删改错误或直接绕过生成。
 2. 检查`review/validation.json`并预览Excel。任一企业未通过六轮、字段审计、投资机构逐家背景或来源边界时，整批正式交付阻断，不能先给一份看似完成的部分成品。
 3. 有历史成果时做逐主张回归，分类为`publicly_reconfirmed`、`onsite_only`、`legacy_lead_unverified`、`conflicted`或`discarded_wrong_entity`；去向覆盖率必须为100%。历史成果不存在时仍执行同一深检门槛。
 4. Markdown全部完成并质检后，用户要求Word才运行：
