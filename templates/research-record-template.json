@@ -1,0 +1,92 @@
+{
+  "enterprise_id": "{{enterprise_id}}",
+  "enterprise_name": "{{enterprise_name}}",
+  "input_name": "{{input_name}}",
+  "status": "pending_research",
+  "subject_mapping": {
+    "status": "ambiguous",
+    "legal_entity": "",
+    "project_name": "",
+    "brand_names": [],
+    "former_names": [],
+    "mapping_basis": ""
+  },
+  "coverage": "C",
+  "researched_at": "",
+  "initial_materials": [],
+  "sources": [],
+  "facts": [],
+  "field_outputs": {
+    "核心人员": {"text": "", "basis_fact_ids": []},
+    "核心人员背景": {"text": "", "basis_fact_ids": []},
+    "核心人员公开联系方式": {"text": "", "basis_fact_ids": []},
+    "主要产品": {"text": "", "basis_fact_ids": []},
+    "核心技术及应用场景": {"text": "", "basis_fact_ids": []},
+    "产业化进展及客户线索": {"text": "", "basis_fact_ids": []},
+    "科创资质及科技项目": {"text": "", "basis_fact_ids": []},
+    "知识产权及技术成果": {"text": "", "basis_fact_ids": []},
+    "上下游": {"text": "", "basis_fact_ids": []},
+    "竞争对手": {"text": "", "basis_fact_ids": []},
+    "融资及投资机构背景": {"text": "", "basis_fact_ids": []}
+  },
+  "legacy_inheritance": {
+    "required": false,
+    "completed": false,
+    "candidate_files": [],
+    "matched_sources": [],
+    "reverified_fact_ids": [],
+    "regression_report": "",
+    "unresolved_losses": []
+  },
+  "research_audit": {
+    "mode": "full_deep_research",
+    "onsite_notes_ingested": false,
+    "onsite_notes_decomposed": false,
+    "onsite_notes_public_crosschecked": false,
+    "rounds": {
+      "R1_subject_mapping": {"status": "pending", "queries_or_paths": [], "new_fact_ids": [], "new_anchors": [], "remaining_tasks": []},
+      "R2_channel_coverage": {"status": "pending", "queries_or_paths": [], "new_fact_ids": [], "new_anchors": [], "remaining_tasks": []},
+      "R3_field_deepening": {"status": "pending", "queries_or_paths": [], "new_fact_ids": [], "new_anchors": [], "remaining_tasks": []},
+      "R4_anchor_expansion": {"status": "pending", "queries_or_paths": [], "new_fact_ids": [], "new_anchors": [], "remaining_tasks": []},
+      "R5_gap_and_conflict": {"status": "pending", "queries_or_paths": [], "new_fact_ids": [], "new_anchors": [], "remaining_tasks": []},
+      "R6_cross_column_and_output": {"status": "pending", "queries_or_paths": [], "new_fact_ids": [], "new_anchors": [], "remaining_tasks": []}
+    },
+    "anchor_queue": [],
+    "weak_source_upgrade_queue": [],
+    "conflict_queue": [],
+    "coverage_scan_completed": false,
+    "blank_field_followup_completed": false,
+    "company_official_channels_checked": false,
+    "government_attachment_lists_checked": false,
+    "business_profile_checked": false,
+    "visual_search_cards_checked": false,
+    "industrialization_qualification_ip_deepened": false,
+    "cross_column_scan_completed": false,
+    "contact_cleanup_completed": false,
+    "investor_background_deepened": false,
+    "channel_checks": {
+      "official_website_or_account": {"status": "", "paths": [], "source_ids": [], "notes": ""},
+      "government_or_park_attachments": {"status": "", "paths": [], "source_ids": [], "notes": ""},
+      "business_profile": {"status": "", "paths": [], "source_ids": [], "notes": ""},
+      "visual_search_cards": {"status": "", "paths": [], "source_ids": [], "notes": ""},
+      "patent_standard_ip": {"status": "", "paths": [], "source_ids": [], "notes": ""},
+      "customer_partner_reverse": {"status": "", "paths": [], "source_ids": [], "notes": ""},
+      "financing_investor_primary": {"status": "", "paths": [], "source_ids": [], "notes": ""}
+    },
+    "field_checks": {},
+    "person_anchors_found": [],
+    "person_anchors_reviewed": [],
+    "confirmed_investors": [],
+    "investor_background_completed_for": [],
+    "investor_checks": {},
+    "historical_financing_scan": {"status": "", "paths": [], "source_ids": [], "notes": ""}
+  },
+  "assessment": {
+    "rating": "D",
+    "summary": "待完成公开检索与主体映射。",
+    "basis_fact_ids": [],
+    "uncertainties": [],
+    "visit_priorities": []
+  },
+  "version_history": []
+}

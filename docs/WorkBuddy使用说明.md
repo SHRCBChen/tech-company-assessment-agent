@@ -44,7 +44,7 @@ python -m pip install -r requirements.txt
 
 选择仓库中的：
 
-`workbuddy\batch-tech-company-assessment-workbuddy-skill-v3.zip`
+`workbuddy\batch-tech-company-assessment-workbuddy-skill-v4.zip`
 
 导入后确认该技能处于启用状态。WorkBuddy官方说明支持通过本地技能包导入Skill；如当前版本界面名称略有变化，可在“技能”页面查找“添加技能”或“上传技能”。
 
@@ -181,6 +181,8 @@ WorkBuddy可自行继续处理的情况，不需要逐步确认。出现下列�
 6. 客户、合作、送样、定点、中标和量产没有混写；
 7. 评级按赛道和发展阶段形成至少三条事实—关系—结论链；
 8. `build_deliverables.py`没有返回`BLOCKED`。
+
+V4还要求：渠道审计绑定具体查询/页面和来源ID，官网优先由企查查详情链接进入并检查具体内容页；客户关系登记主体与阶段；投资机构背景使用独立于融资事件的来源；每家企业完成历史融资扫描。
 
 此外，验收文件中六轮键名必须是`R1_subject_mapping`至`R6_cross_column_and_output`，状态必须是`complete`或`not_applicable`；不能使用`R1`—`R6`与`done`简写，同一组检索词也不能复制到多轮。`research_audit.field_checks`必须包含全部11类字段。
 

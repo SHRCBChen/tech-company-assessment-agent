@@ -51,6 +51,8 @@
           "excel_text": {"type": "string"},
           "target_field": {"type": "string"},
           "fact_type": {"type": "string"},
+          "relationship_subject": {"type": "string"},
+          "relationship_type": {"enum": ["customer", "partner", "supplier", "sample", "validation", "nomination", "order", "bid", "related_company_customer", "investor", "shareholder", "asset_transaction"]},
           "source_id": {"type": "string"},
           "evidence_status": {"enum": ["公开确认", "企业自述", "现场陈述", "现场观察", "待核线索", "内部评价"]},
           "source_type": {"enum": ["公开信息", "大赛名单", "大赛现场", "分支行拜访", "企业材料"]},
@@ -89,7 +91,7 @@
     },
     "research_audit": {
       "type": "object",
-      "required": ["mode", "rounds", "anchor_queue", "weak_source_upgrade_queue", "conflict_queue", "coverage_scan_completed", "blank_field_followup_completed", "company_official_channels_checked", "government_attachment_lists_checked", "business_profile_checked", "visual_search_cards_checked", "industrialization_qualification_ip_deepened", "cross_column_scan_completed", "contact_cleanup_completed", "investor_background_deepened", "channel_checks", "field_checks", "person_anchors_found", "person_anchors_reviewed", "confirmed_investors", "investor_background_completed_for", "investor_checks"],
+      "required": ["mode", "rounds", "anchor_queue", "weak_source_upgrade_queue", "conflict_queue", "coverage_scan_completed", "blank_field_followup_completed", "company_official_channels_checked", "government_attachment_lists_checked", "business_profile_checked", "visual_search_cards_checked", "industrialization_qualification_ip_deepened", "cross_column_scan_completed", "contact_cleanup_completed", "investor_background_deepened", "channel_checks", "field_checks", "person_anchors_found", "person_anchors_reviewed", "confirmed_investors", "investor_background_completed_for", "investor_checks", "historical_financing_scan"],
       "properties": {
         "mode": {"enum": ["full_deep_research", "incremental_update"]},
         "onsite_notes_ingested": {"type": "boolean"},
@@ -126,10 +128,11 @@
           "type": "object",
           "additionalProperties": {
             "type": "object",
-            "required": ["status", "paths", "notes"],
+            "required": ["status", "paths", "source_ids", "notes"],
             "properties": {
-              "status": {"enum": ["checked", "not_applicable", "blocked"]},
+              "status": {"enum": ["checked_with_sources", "searched_no_public_result", "not_applicable", "blocked"]},
               "paths": {"type": "array", "items": {"type": "string"}},
+              "source_ids": {"type": "array", "items": {"type": "string"}},
               "notes": {"type": "string"}
             }
           }
@@ -165,6 +168,16 @@
               "relevant_resources": {"type": "string"},
               "background_source_ids": {"type": "array", "items": {"type": "string"}}
             }
+          }
+        },
+        "historical_financing_scan": {
+          "type": "object",
+          "required": ["status", "paths", "source_ids", "notes"],
+          "properties": {
+            "status": {"enum": ["completed", "searched_no_public_result", "not_applicable", "blocked"]},
+            "paths": {"type": "array", "items": {"type": "string"}},
+            "source_ids": {"type": "array", "items": {"type": "string"}},
+            "notes": {"type": "string"}
           }
         }
       }

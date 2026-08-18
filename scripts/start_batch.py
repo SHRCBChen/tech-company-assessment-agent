@@ -163,9 +163,10 @@ def empty_audit() -> dict:
         "business_profile_checked": False, "visual_search_cards_checked": False,
         "industrialization_qualification_ip_deepened": False, "cross_column_scan_completed": False,
         "contact_cleanup_completed": False, "investor_background_deepened": False,
-        "channel_checks": {key: {"status": "", "paths": [], "notes": ""} for key in channels},
+        "channel_checks": {key: {"status": "", "paths": [], "source_ids": [], "notes": ""} for key in channels},
         "field_checks": {}, "person_anchors_found": [], "person_anchors_reviewed": [],
         "confirmed_investors": [], "investor_background_completed_for": [], "investor_checks": {},
+        "historical_financing_scan": {"status": "", "paths": [], "source_ids": [], "notes": ""},
     }
 
 

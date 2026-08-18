@@ -35,6 +35,9 @@ const REQUIRED_ROUNDS = [
   "R6_cross_column_and_output"
 ];
 const GENERIC_SOURCE_URL = /^https?:\/\/[^/]+\/?(?:[?#].*)?$/i;
+const GENERIC_PATH = /^(?:企查查|websearch|企查查[\\/＋+&]websearch|网页检索|公开检索)$/i;
+const QUALIFICATION_ANCHOR = /高新技术企业|科技型中小企业|专精特新|小巨人|企业技术中心|工程技术中心|研发平台|科技项目|科技计划|创新资金|首台套|首批次|首版次|成果转化|资助公示|认定|备案/;
+const IP_DETAIL_ANCHOR = /登记号|申请号|授权号|专利号|代表专利|技术方向|布图设计|频率合成器|锁相环|标准|论文|受让|许可|失效|质押/;
 
 function argsOf(argv) {
   const out = {};
@@ -44,6 +47,10 @@ function argsOf(argv) {
 
 function hasNamedContact(text) {
   return /^[\u3400-\u9FFF·A-Za-z]{2,30}[：:]/.test(text);
+}
+
+function concretePaths(values = []) {
+  return new Set(values.map((value) => String(value ?? "").trim()).filter((value) => value.length >= 8 && !GENERIC_PATH.test(value)));
 }
 
 export async function validateRun(runDir) {
@@ -133,8 +140,22 @@ export async function validateRun(runDir) {
     const channelChecks = audit.channel_checks ?? {};
     for (const channel of REQUIRED_CHANNEL_CHECKS) {
       const check = channelChecks[channel];
-      if (!check || !["checked", "not_applicable", "blocked"].includes(check.status)) errors.push(`缺少必查渠道审计：${channel}`);
-      else if (check.status === "blocked") errors.push(`必查渠道仍被阻塞：${channel}`);
+      if (!check || !["checked_with_sources", "searched_no_public_result", "not_applicable", "blocked"].includes(check.status)) {
+        errors.push(`缺少必查渠道审计：${channel}`);
+        continue;
+      }
+      if (check.status === "blocked") errors.push(`必查渠道仍被阻塞：${channel}`);
+      const paths = concretePaths(check.paths ?? []);
+      const linkedSources = new Set(check.source_ids ?? []);
+      if (check.status === "checked_with_sources") {
+        if (!paths.size) errors.push(`必查渠道没有具体查询或页面路径：${channel}`);
+        if (!linkedSources.size || ![...linkedSources].every((id) => sourceIds.has(id))) errors.push(`必查渠道没有绑定有效来源ID：${channel}`);
+      }
+      if (check.status === "searched_no_public_result" && paths.size < 2) errors.push(`无结果渠道未完成两条具体路径：${channel}`);
+      if (channel === "official_website_or_account" && check.status === "checked_with_sources") {
+        const hasOfficialSource = sources.some((source) => linkedSources.has(source.source_id) && /(官网|官方)/.test(String(source.title ?? "")));
+        if (!hasOfficialSource) errors.push("官网渠道虽标记有结果，但未登记官网/官方账号具体页面来源");
+      }
     }
     const fieldChecks = audit.field_checks ?? {};
     for (const field of FIELD_LIST) {
@@ -150,8 +171,26 @@ export async function validateRun(runDir) {
         const basis = new Set(fieldOutputs[field]?.basis_fact_ids ?? []);
         for (const id of check.fact_ids ?? []) if (!basis.has(id)) errors.push(`字段${field}的检索事实未进入Excel呈现层：${id}`);
       }
-      if (check.status === "searched_no_public_result" && new Set(check.paths ?? []).size < 2) errors.push(`空白字段未完成两条不同路径补查：${field}`);
+      if (check.status === "searched_no_public_result" && concretePaths(check.paths ?? []).size < 2) errors.push(`空白字段未完成两条具体路径补查：${field}`);
       if (check.status === "blocked") errors.push(`字段检索仍被阻塞：${field}`);
+    }
+    const productText = String(fieldOutputs["主要产品"]?.text ?? "").trim();
+    if (productText && !String(fieldOutputs["上下游"]?.text ?? "").trim()) errors.push("主要产品已确认但上下游仍为空，应完成产业链位置归纳");
+    if (productText && !String(fieldOutputs["竞争对手"]?.text ?? "").trim()) errors.push("主要产品已确认但竞争对手仍为空，应给出同类产品或替代方案厂商");
+    const qualificationText = String(fieldOutputs["科创资质及科技项目"]?.text ?? "").trim();
+    if (qualificationText && !QUALIFICATION_ANCHOR.test(qualificationText)) errors.push("科创资质列缺少具体资质、科技项目、研发平台或认定状态");
+    const ipText = String(fieldOutputs["知识产权及技术成果"]?.text ?? "").trim();
+    if (ipText && !IP_DETAIL_ANCHOR.test(ipText)) errors.push("知识产权列只有数量或泛称，缺少代表名称、编号、状态或技术方向");
+    const peopleText = String(fieldOutputs["核心人员"]?.text ?? "");
+    const backgroundText = String(fieldOutputs["核心人员背景"]?.text ?? "");
+    const peopleNames = [...peopleText.matchAll(/[\u4e00-\u9fff·]{2,4}(?=[（(:：])/g)].map((match) => match[0]);
+    if (peopleNames.length && backgroundText && !peopleNames.some((name) => backgroundText.includes(name))) errors.push("核心人员背景仍是团队泛称，未与任何已列核心人员逐人对应");
+    const industrialBasis = new Set(fieldOutputs["产业化进展及客户线索"]?.basis_fact_ids ?? []);
+    for (const fact of record.facts ?? []) {
+      if (fact.target_field === "产业化进展及客户线索" && /客户|合作|送样|定点|订单|出货|中标|供应/.test(String(fact.fact_text ?? ""))) {
+        if (!String(fact.relationship_subject ?? "").trim() || !String(fact.relationship_type ?? "").trim()) errors.push(`产业化关系事实缺少关系主体或类型：${fact.fact_id}`);
+        if (fact.relationship_type === "related_company_customer" && industrialBasis.has(fact.fact_id) && !String(fieldOutputs["产业化进展及客户线索"]?.text ?? "").includes("关联公司客户")) errors.push(`关联公司客户被写入目标企业产业化列但未明确边界：${fact.fact_id}`);
+      }
     }
     const inherited = record.legacy_inheritance ?? {};
     if (inherited.required && !inherited.completed) errors.push("检测到历史Excel，但尚未完成旧成果继承审计");
@@ -171,8 +210,17 @@ export async function validateRun(runDir) {
       if (check.relationship_status !== "publicly_confirmed") errors.push(`已确认投资方缺少公开投资关系核验：${investor}`);
       if (!(check.relationship_source_ids ?? []).length || !(check.relationship_source_ids ?? []).every((id) => sourceIds.has(id))) errors.push(`投资方关系来源无效：${investor}`);
       if (!(check.background_source_ids ?? []).length || !(check.background_source_ids ?? []).every((id) => sourceIds.has(id))) errors.push(`投资方背景来源无效：${investor}`);
+      if ((check.background_source_ids ?? []).length && !(check.background_source_ids ?? []).some((id) => !(check.relationship_source_ids ?? []).includes(id))) errors.push(`投资方背景未使用独立于融资事件的机构/政府/母集团来源：${investor}`);
       const completedParts = [check.manager_or_parent, check.focus_and_stage, check.relevant_resources].filter((value) => String(value ?? "").trim()).length;
       if (!String(check.institution_type ?? "").trim() || completedParts < 2) errors.push(`投资方背景未达到最低完整度：${investor}`);
+    }
+    const history = audit.historical_financing_scan ?? {};
+    if (!["completed", "searched_no_public_result", "not_applicable"].includes(history.status)) errors.push("历史融资扫描未完成");
+    else {
+      const historyPaths = concretePaths(history.paths ?? []);
+      const historySources = new Set(history.source_ids ?? []);
+      if (history.status === "completed" && (historyPaths.size < 2 || !historySources.size || ![...historySources].every((id) => sourceIds.has(id)))) errors.push("历史融资扫描缺少两条具体路径或有效来源ID");
+      if (history.status === "searched_no_public_result" && historyPaths.size < 2) errors.push("历史融资无结果时仍须完成两条具体路径");
     }
     const highValueFields = new Set((record.facts ?? []).filter((f) => f.valid_status === "当前有效" && f.evidence_status !== "待核线索").map((f) => f.target_field));
     if (highValueFields.size < 3) errors.push("可用于客户经理输出的已核字段少于3类，不能作为完整深检成果交付");
