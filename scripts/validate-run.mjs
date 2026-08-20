@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const FIELDS = new Set(["核心人员", "核心人员背景", "核心人员公开联系方式", "主要产品", "核心技术及应用场景", "产业化进展及客户线索", "科创资质及科技项目", "知识产权及技术成果", "上下游", "竞争对手", "融资及投资机构背景", "不进入Excel"]);
+const FIELDS = new Set(["核心人员", "核心人员背景", "核心人员公开联系方式", "主要产品", "核心技术及应用场景", "产业化进展及客户线索", "科创资质及科技项目", "知识产权及技术成果", "上下游", "竞争对手", "融资及投资机构背景", "公开风险事项", "不进入Excel"]);
 const PUBLIC_CONTACT_BAD = /(总机|客服|销售|招聘|热线|400[-\s]?\d|公共邮箱|企业邮箱|公司电话|官网电话)/i;
 const FIELD_LIST = [...FIELDS].filter((field) => field !== "不进入Excel");
 const REQUIRED_AUDIT_FLAGS = [
@@ -25,6 +25,7 @@ const REQUIRED_CHANNEL_CHECKS = [
   "patent_standard_ip",
   "customer_partner_reverse",
   "financing_investor_primary"
+  ,"qcc_own_risk"
 ];
 const REQUIRED_ROUNDS = [
   "R1_subject_mapping",
@@ -175,6 +176,14 @@ export async function validateRun(runDir) {
       if (check.status === "blocked") errors.push(`字段检索仍被阻塞：${field}`);
     }
     const productText = String(fieldOutputs["主要产品"]?.text ?? "").trim();
+    const technologyText = String(fieldOutputs["核心技术及应用场景"]?.text ?? "").trim();
+    if (productText && productText.length < 60) errors.push("主要产品解释过短，应说明产品是什么、解决的问题、产品形态、主要功能和使用对象");
+    if (technologyText && !/技术路线|关键指标|应用场景|行业对标/.test(technologyText)) errors.push("核心技术及应用场景缺少技术路线、关键指标、应用场景或行业对标结构");
+    const riskText = String(fieldOutputs["公开风险事项"]?.text ?? "").trim();
+    if (!["是", "否"].includes(riskText)) errors.push("公开风险事项只能填写“是”或“否”且不得在未完成企查查核查时留空");
+    const riskCheck = fieldChecks["公开风险事项"] ?? {};
+    if (riskText === "是" && riskCheck.status !== "found") errors.push("风险列填“是”但未登记风险事实");
+    if (riskText === "否" && riskCheck.status !== "searched_no_public_result") errors.push("风险列填“否”但未登记企查查无结果核查");
     if (productText && !String(fieldOutputs["上下游"]?.text ?? "").trim()) errors.push("主要产品已确认但上下游仍为空，应完成产业链位置归纳");
     if (productText && !String(fieldOutputs["竞争对手"]?.text ?? "").trim()) errors.push("主要产品已确认但竞争对手仍为空，应给出同类产品或替代方案厂商");
     const qualificationText = String(fieldOutputs["科创资质及科技项目"]?.text ?? "").trim();

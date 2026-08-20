@@ -18,7 +18,8 @@
     "知识产权及技术成果",
     "上下游",
     "竞争对手",
-    "融资及投资机构背景"
+    "融资及投资机构背景",
+    "公开风险事项"
   ],
   "rating_scale": {
     "A": "优先调研",
@@ -51,5 +52,6 @@
     "report_reasoning_mode": "fact_relation_conclusion_chain",
     "onsite_notes_default_trust": "high_first_hand",
     "onsite_verification_only_for_decision_changing_claims": true
+    ,"risk_excel_output": "仅填是或否；仅限目标企业自身风险，详情留在事实底稿"
   }
 }
