@@ -164,6 +164,19 @@ def validate_record(record: dict, fields: list[str]) -> list[str]:
                 errors.append(f"空白字段至少需要两条不同检索路径：{field}")
 
     product_text = _text((outputs.get("主要产品") or {}).get("text"))
+    technology_text = _text((outputs.get("核心技术及应用场景") or {}).get("text"))
+    if product_text and len(product_text) < 60:
+        errors.append("主要产品解释过短，应说明产品是什么、解决的问题、产品形态、主要功能和使用对象")
+    if technology_text and not re.search(r"技术路线|关键指标|应用场景|行业对标", technology_text):
+        errors.append("核心技术及应用场景缺少技术路线、关键指标、应用场景或行业对标结构")
+    risk_text = _text((outputs.get("公开风险事项") or {}).get("text"))
+    risk_check = field_checks.get("公开风险事项") or {}
+    if risk_text not in {"是", "否"}:
+        errors.append("公开风险事项只能填写“是”或“否”且不得在未完成企查查核查时留空")
+    if risk_text == "是" and risk_check.get("status") != "found":
+        errors.append("风险列填“是”但未登记风险事实")
+    if risk_text == "否" and risk_check.get("status") != "searched_no_public_result":
+        errors.append("风险列填“否”但未登记企查查无结果核查")
     upstream_text = _text((outputs.get("上下游") or {}).get("text"))
     competitor_text = _text((outputs.get("竞争对手") or {}).get("text"))
     if product_text and not upstream_text:

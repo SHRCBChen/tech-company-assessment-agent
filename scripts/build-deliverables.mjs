@@ -5,7 +5,7 @@ import { SpreadsheetFile, Workbook } from "@oai/artifact-tool";
 import { validateRun } from "./validate-run.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const FIELD_HEADERS = ["核心人员", "核心人员背景", "核心人员公开联系方式", "主要产品", "核心技术及应用场景", "产业化进展及客户线索", "科创资质及科技项目", "知识产权及技术成果", "上下游", "竞争对手", "融资及投资机构背景"];
+const FIELD_HEADERS = ["核心人员", "核心人员背景", "核心人员公开联系方式", "主要产品", "核心技术及应用场景", "产业化进展及客户线索", "科创资质及科技项目", "知识产权及技术成果", "上下游", "竞争对手", "融资及投资机构背景", "公开风险事项"];
 const RATING = { A: "优先调研", B: "重点跟踪", C: "持续观察", D: "信息待补" };
 
 function argsOf(argv) {
@@ -168,12 +168,12 @@ async function buildWorkbook(records, outputFile, previewFile) {
     body.format.rowHeight = 84;
     sheet.getRangeByIndexes(1, 0, rows.length, 1).format = { fill: "#D9EAF7", font: { bold: true, color: "#17365D" }, verticalAlignment: "top", wrapText: true };
   }
-  const widths = [24, 22, 33, 26, 30, 34, 38, 34, 36, 28, 26, 40];
+  const widths = [24, 22, 33, 26, 36, 44, 38, 34, 36, 28, 26, 40, 12];
   widths.forEach((width, col) => { sheet.getRangeByIndexes(0, col, all.length, 1).format.columnWidth = width; });
-  sheet.tables.add(`A1:L${all.length}`, true, "EnterpriseResearchTable");
-  const inspect = await workbook.inspect({ kind: "table", range: `企业信息!A1:L${Math.min(all.length, 6)}`, include: "values,formulas", tableMaxRows: 6, tableMaxCols: 12, maxChars: 5000 });
+  sheet.tables.add(`A1:M${all.length}`, true, "EnterpriseResearchTable");
+  const inspect = await workbook.inspect({ kind: "table", range: `企业信息!A1:M${Math.min(all.length, 6)}`, include: "values,formulas", tableMaxRows: 6, tableMaxCols: 13, maxChars: 5000 });
   const errors = await workbook.inspect({ kind: "match", searchTerm: "#REF!|#DIV/0!|#VALUE!|#NAME\\?|#N/A", options: { useRegex: true, maxResults: 50 }, summary: "final formula error scan" });
-  const preview = await workbook.render({ sheetName: "企业信息", range: `A1:L${Math.min(all.length, 4)}`, scale: 1, format: "png" });
+  const preview = await workbook.render({ sheetName: "企业信息", range: `A1:M${Math.min(all.length, 4)}`, scale: 1, format: "png" });
   await fs.writeFile(previewFile, new Uint8Array(await preview.arrayBuffer()));
   const xlsx = await SpreadsheetFile.exportXlsx(workbook);
   await xlsx.save(outputFile);

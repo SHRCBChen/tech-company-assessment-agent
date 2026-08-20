@@ -1,6 +1,6 @@
 interface:
   display_name: "WorkBuddy科创企业批量检索与初评"
-  short_description: "导入企业及现场笔记，生成Excel、ima底稿和初评报告"
-  default_prompt: "Use $workbuddy-tech-company-assessment to 导入企业名单及现场笔记附件，调用官方企查查连接器和公开网页完成深检，并生成Excel、ima底稿和初评报告。"
+  short_description: "导入企业及现场笔记，生成Excel、ima底稿、初评报告和推进意见"
+  default_prompt: "Use $workbuddy-tech-company-assessment to 导入企业名单及现场笔记附件，调用官方企查查连接器和公开网页完成深检，并生成Excel、ima可编辑底稿、初评报告和模板化推进意见。"
 policy:
   allow_implicit_invocation: true

@@ -16,7 +16,7 @@ from strict_validation import validate_record
 FIELDS = [
     "核心人员", "核心人员背景", "核心人员公开联系方式", "主要产品", "核心技术及应用场景",
     "产业化进展及客户线索", "科创资质及科技项目", "知识产权及技术成果", "上下游",
-    "竞争对手", "融资及投资机构背景",
+    "竞争对手", "融资及投资机构背景", "公开风险事项",
 ]
 RATING = {"A": "优先调研", "B": "重点跟踪", "C": "持续观察", "D": "信息待补"}
 
@@ -175,7 +175,7 @@ def main() -> None:
         for cell in row:
             cell.alignment = Alignment(vertical="top", wrap_text=True)
             cell.border = Border(bottom=thin)
-    widths = [26, 24, 34, 26, 32, 36, 40, 36, 40, 30, 28, 44]
+    widths = [26, 24, 34, 26, 36, 44, 40, 36, 40, 30, 28, 44, 12]
     for index, width in enumerate(widths, start=1):
         sheet.column_dimensions[get_column_letter(index)].width = width
     sheet.freeze_panes = "B2"

@@ -27,7 +27,8 @@
     "知识产权及技术成果": {"text": "", "basis_fact_ids": []},
     "上下游": {"text": "", "basis_fact_ids": []},
     "竞争对手": {"text": "", "basis_fact_ids": []},
-    "融资及投资机构背景": {"text": "", "basis_fact_ids": []}
+    "融资及投资机构背景": {"text": "", "basis_fact_ids": []},
+    "公开风险事项": {"text": "", "basis_fact_ids": []}
   },
   "legacy_inheritance": {
     "required": false,
