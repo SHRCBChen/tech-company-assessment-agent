@@ -16,6 +16,7 @@ def main() -> None:
         "channel_source_binding": "checked_with_sources" in strict_text and '"source_ids"' in schema_text,
         "historical_financing_gate": "historical_financing_scan" in strict_text and "historical_financing_scan" in schema_text,
         "relationship_boundary": "relationship_subject" in strict_text and "relationship_subject" in schema_text,
+        "advancement_template_sanitizer": (root / "scripts" / "prepare_advancement_template.py").exists(),
     }
     status = "INSTALLATION_OK" if all(checks.values()) else "OUTDATED_INSTALLATION"
     print(json.dumps({"status": status, "checks": checks}, ensure_ascii=False, indent=2))
